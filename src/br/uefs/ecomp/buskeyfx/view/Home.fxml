@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.effect.*?>
+<?import javafx.scene.text.*?>
+<?import javafx.scene.paint.*?>
+<?import java.lang.*?>
+<?import java.net.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane id="AnchorPane" fx:id="baseHome" prefHeight="304.0" prefWidth="512.0" styleClass="mainFxmlClass" stylesheets="@home.css" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="br.uefs.ecomp.buskeyfx.controller.HomeController">
+   <children>
+      <Pane fx:id="BusKeyHome" layoutX="13.0" layoutY="13.0" prefHeight="278.0" prefWidth="487.0" AnchorPane.bottomAnchor="13.0" AnchorPane.leftAnchor="13.0" AnchorPane.rightAnchor="13.0" AnchorPane.topAnchor="13.0">
+         <children>
+            <Button fx:id="btnPesquisar" layoutX="259.0" layoutY="170.0" mnemonicParsing="false" onMouseClicked="#pesquisar" prefWidth="100.0" text="Pesquisar" textFill="#221f1f" />
+            <TextField fx:id="txtCampoPesquisa" layoutX="129.0" layoutY="127.0" prefHeight="25.0" prefWidth="230.0" promptText="Pesquise, se quiser é claro!" />
+            <Label layoutX="194.0" layoutY="60.0" text="BusKey" textFill="#3cc7bf">
+               <font>
+                  <Font name="Bernard MT Condensed" size="36.0" />
+               </font>
+            </Label>
+            <Button fx:id="btnCuriosidade" layoutX="129.0" layoutY="170.0" mnemonicParsing="false" prefWidth="100.0" text="Curiosidade" textFill="#221f1f" />
+         </children>
+      </Pane>
+   </children>
+</AnchorPane>
