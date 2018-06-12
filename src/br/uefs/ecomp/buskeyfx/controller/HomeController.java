@@ -6,13 +6,18 @@
 package br.uefs.ecomp.buskeyfx.controller;
 
 import br.uefs.ecomp.buskeyfx.model.Pagina;
+import br.uefs.ecomp.buskeyfx.model.Palavra;
+import br.uefs.ecomp.buskeyfx.util.ArvoreAVL;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -42,52 +47,70 @@ public class HomeController implements Initializable {
     private TextField txtCampoPesquisa;
     @FXML
     private Button btnCuriosidade;
-    
-    private LinkedList<Pagina> lista;
-    
-    public Pagina pagina;
+
+    private ArvoreAVL dicionario; //estrutura responsavel por armazenar palavras já pesquisada pelo usuario.
+
+    private LinkedList paginasPesquisadas; // Utilzada para armazenar as paginas encontradas durante uma pesquisa;
 
     /**
      * Initializes the controller class.
      */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        this.lista = new LinkedList<>();
+        dicionario = new ArvoreAVL();
         // TODO
     }
 
-    private void carregarPaginas(File[] arquivos) throws FileNotFoundException, IOException {
-        FileInputStream file;
-        InputStreamReader inputReader;
-        BufferedReader buffer;
+//    private void carregarDicionario() throws FileNotFoundException, IOException, ClassNotFoundException {
+//        File dadosDicionario = new File("Dicionario.data");
+//        if (!dadosDicionario.exists()) {
+//            dadosDicionario.createNewFile();
+//        }
+//        if (dadosDicionario.length() > 0) {
+//            ObjectInputStream entrada;
+//            entrada = new ObjectInputStream(new FileInputStream(dadosDicionario));
+//            dicionario = (ArvoreAVL) entrada.readObject();
+//            entrada.close();
+//        }
+//    }
+//
+//    private void atualizarDicionario() throws FileNotFoundException, IOException {
+//        File dadosDicionario = new File("Dicionario.data");
+//
+//        ObjectOutputStream saida;
+//        saida = new ObjectOutputStream(new FileOutputStream(dadosDicionario));
+//        saida.writeObject(dicionario);
+//        saida.close();
+//    }
+
+    private Pagina carregarPagina(File arquivo) throws FileNotFoundException, IOException {
+        InputStreamReader inputReader = new InputStreamReader(new FileInputStream(arquivo));
+        BufferedReader buffer = new BufferedReader(inputReader);
         LinkedList linhas = new LinkedList();
         String[] palavras;
-        for (File arquivo : arquivos) {
-            file = new FileInputStream(arquivo);
-            inputReader = new InputStreamReader(file);
-            buffer = new BufferedReader(inputReader);
-            String linha;
-            do {
-                linha = buffer.readLine();
-                if (linha != null) {
-                    palavras = linha.split(" ");
-                    linhas.add(palavras);
-                }
-            } while (linha != null);
-            pagina = new Pagina(arquivos[0].getName(), linhas);
-            lista.add(pagina);
-            file.close();
-            inputReader.close();
-            buffer.close();
-        }
+        String linha;
+        do {
+            linha = buffer.readLine();
+            if (linha != null) {
+                palavras = linha.split(" ");
+                //System.out.println(Arrays.toString(palavras));
+                linhas.add(palavras);
+            }
+        } while (linha != null);
+        inputReader.close();
+        buffer.close();
+        return new Pagina(arquivo.getName(), linhas);
     }
-
-    /*private void validaPalavra(String palavra){
-        char c = palavra;
-        for(int i = 0; c != null; i++){
-            
-        }
-    }*/
+    /**
+     * Método responsavel por verificar se uma determinada linha possue uma palavra chave. 
+     * 
+     * @param palavra
+     * @return 
+     */
+    private boolean possuePalavraChave(String[] palavra){
+        return false;
+    }
+    
     /**
      * Método responsavel por pegar o nome de arquivos de um diretorio seguindo utilizando como filtro a extensão do arquivo.
      *
@@ -95,41 +118,94 @@ public class HomeController implements Initializable {
      * @param extensao Extensão utilizada como criterio de filtragem.
      * @return Uma Array que contém os arquivos encontrados.
      */
-    private static File[] pegarArquivos(String caminho, final String extensao) {
-        File dir = new File(caminho);
-        // filtro pela extensão procurada
-        FileFilter filter = null;
+    private File[] pegarArquivos(String caminho, final String extensao) {
+        File diretorio = new File(caminho);
+        FileFilter filtro = null;
         if (extensao != null) {
-            filter = (File nomeDoCaminho) -> nomeDoCaminho.getAbsolutePath().endsWith(extensao);
+            filtro = (File nomeDoCaminho) -> nomeDoCaminho.getAbsolutePath().endsWith(extensao);
         }
-        // lista os arquivos que correspondem ao match
-        return dir.listFiles(filter);
+        return diretorio.listFiles(filtro);
+    }
+
+    private LinkedList verificaDicionario(Palavra[] palavrasChaves) {
+        LinkedList paginasEncontradas = new LinkedList();
+
+        for (Palavra chave : palavrasChaves) {
+            System.out.println(chave);
+            if (dicionario.contem(chave)) {
+                paginasEncontradas.addAll(((Palavra) dicionario.buscarPalavra(chave)).getPaginas());
+            }
+        }
+        return paginasEncontradas;
+    }
+
+    private LinkedList procurarNosArquivos(File[] arquivos, Palavra[] palavrasChaves) throws IOException {
+        LinkedList paginasEncontradas = new LinkedList();
+        for (Palavra chave : palavrasChaves) {
+            for (File arquivo : arquivos) {
+                Pagina pagina = carregarPagina(arquivo);
+                pagina.descobrirMultRelevancia(Palavra.palavraToString(palavrasChaves)); //Calcula a relevancia da pagina atual com base na atual palavra chave pesquisada;
+                if (pagina.temRelevancia()) {
+                    chave.addNovaPagina(pagina);
+                    dicionario.inserir(chave); //Adciona a palavra ao dicionario.
+                    if (!paginasEncontradas.contains(pagina)) {
+                        paginasEncontradas.add(pagina);
+                    }
+                }
+            }
+        }
+        //System.out.println(dicionario);
+        return paginasEncontradas;
     }
 
     @FXML
-    private void pesquisar(MouseEvent event) throws IOException {
+    private void pesquisar(MouseEvent event) throws IOException, FileNotFoundException, ClassNotFoundException {
         /*Antes de pesquisar deve-se verifiar se as palavras chaves que o usuario digitou
         já foram pesquisadas anteriomente. isto é, verificar no "Dicionario" (estutura de dados)
         se TODAS as palavras existe, caso uma não exista deve-se procurar somente aquelas que
         possue aquela nova palavra juntamente com as demais paginas.
          */
-        String conteudo = txtCampoPesquisa.getText();
-        if ("".equals(conteudo)) {
-            // Pode ser exibido algum tipo de mensagem pedido para que o usuario digite alguma palavra ou
-            // Pode-se deixar sem acontecer nada. 
+        LinkedList paginasEncontradas = null;
+        Palavra[] palavrasChaves;
+        String palavrasPesquisadas = txtCampoPesquisa.getText();
+        if ("".equals(palavrasPesquisadas)) {
             System.out.println("Digite algo");
         } else {
-            String[] palavrasChaves = conteudo.split(" ");
-            System.out.println(Arrays.toString(palavrasChaves));
-            carregarPaginas(pegarArquivos("arquivos", ".txt"));
-            System.out.println(pagina);
-            pagina.descobrirRelevancia(palavrasChaves);
-            if (pagina.temRelevancia()) {
-                System.out.println(pagina.getRelevancia());
+            palavrasChaves = Palavra.stringToPalavra(palavrasPesquisadas.split(" "));
+            paginasEncontradas = verificaDicionario(palavrasChaves);
+            if (!paginasEncontradas.isEmpty()) {
+                //paginasPesquisadas = paginasEncontradas;
+                System.out.println("Palavra Estava no dicionario");
             } else {
-                System.out.println("Nenhuma palavra foi encontrada");
+                paginasEncontradas = procurarNosArquivos(pegarArquivos("arquivos", ".txt"), palavrasChaves);
+                if (paginasEncontradas.isEmpty()) {
+                    System.out.println("Palavra não encontrada//Mensagem");
+                } else {
+                    //paginasPesquisadas = paginasEncontradas;
+                    System.out.println("Palavra Estava no arquivo");
+                }
             }
         }
+        System.out.println(paginasEncontradas);
     }
-
+    //Necessario trabalhar melhor a interação entre strig e as instancias da classe palavra.
+    //Durante a pesquisa na arvore é necessario verificar se todas palavras foram encontradas;
+    //pois pode acontecer de que em algum momento 2/3 palavras exista na arvore e por esse motiov 
+    //é possivel que não apareca todas as paginas pesquisadas. 
+    /*
+     * - Adcionar
+     * No método de adcionar nova pagina só será necessario verificar no "dicionario" se aquela pagina tem relevancia 
+     * para aquela palavra (isso para todas as palavras do dicionario).
+     * --Caso tenha é so inserir essa pagina. 
+     * --Caso contrario é só inserir na lista de arquivos existentes. 
+     * 
+     * - Editar 
+     * Verificar todas palavras do dicionario verificando a relevancia. 
+     * -- Se se não tiver relevancia é so tirar. 
+     * -- se tiver é so continuar do mesmo jeito. 
+     * 
+     * - Apagar
+     * Verificar todas palavras do "dicionario" e ir retirando a pagina a ser apagada da lista de 
+     * paginas que possue aquela palavra. 
+     */
 }

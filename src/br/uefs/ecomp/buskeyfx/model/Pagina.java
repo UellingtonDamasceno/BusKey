@@ -5,7 +5,6 @@
  */
 package br.uefs.ecomp.buskeyfx.model;
 
-import java.util.Comparator;
 import java.util.Iterator;
 import java.util.LinkedList;
 
@@ -13,7 +12,7 @@ import java.util.LinkedList;
  *
  * @author Uellington Damasceno
  */
-public class Pagina implements Comparable{
+public class Pagina implements Comparable {
 
     private String nome;
     private LinkedList linhas;
@@ -28,44 +27,74 @@ public class Pagina implements Comparable{
         this.relevancia = 0;
         this.acessos = 0;
     }
-    
+
     public int getRelevancia() {
         return relevancia;
-    }
-    public int getAcessos(){
+    }   
+    
+    public int getAcessos() {
         return acessos;
     }
+
+    public void setAcessos(int acessos) {
+        this.acessos += acessos;
+    }
+
+    public String getNome() {
+        return nome;
+    }
+
+    public void setNome(String nome) {
+        this.nome = nome;
+    }
+
+    public LinkedList getLinhas() {
+        return linhas;
+    }
+
+    public void setLinhas(LinkedList linhas) {
+        this.linhas = linhas;
+    }
+
     /**
-     * Método responsavel por caucular a relevância de uma pagina com base nas palavrs chaves. 
-     * @param palavrasChaves Palavras utilizadas como criterio de pontuação de relevância.
+     * Método responsavel por caucular a relevância de uma pagina com base nas palavrs chaves.
+     *
+     * @param palavraChave Palavras utilizadas como criterio de pontuação de relevância.
      */
-    public void descobrirRelevancia(String[] palavrasChaves){
-         int pEncontradas = 0;
+    public void descobrirRelevancia(String palavraChave) {
+        int pEncontradas = 0;
         for (Iterator iLinhas = linhas.iterator(); iLinhas.hasNext();) {
             String[] palavras = (String[]) iLinhas.next();
             for (String palavraConteudo : palavras) {
-                for (String palavraChave : palavrasChaves) {
-                    if (palavraConteudo.equalsIgnoreCase(palavraChave)) {
-                        pEncontradas++;
-                    }
+                if (palavraConteudo.equalsIgnoreCase(palavraChave)) {
+                    pEncontradas++;
                 }
             }
         }
         relevancia = (pEncontradas == 0 || linhas.isEmpty()) ? 0 : pEncontradas;
     }
     
-    public boolean temRelevancia(){
+    public void descobrirMultRelevancia(String[] palavrasChaves){
+        int relevanciaAtual = relevancia;
+        for(String palavraChave : palavrasChaves){
+            descobrirRelevancia(palavraChave);
+            relevanciaAtual += relevancia;
+        }
+        relevancia = relevanciaAtual;
+    }
+    
+    public boolean temRelevancia() {
         return relevancia > 0;
     }
+
     @Override
     public String toString() {
         return nome;
     }
 
-
     @Override
     public int compareTo(Object o) {
-       Pagina outraPagina = (Pagina) o;
-       return this.getRelevancia() - outraPagina.getRelevancia();
+        Pagina outraPagina = (Pagina) o;
+        return this.getRelevancia() - outraPagina.getRelevancia();
     }
 }
