@@ -43,7 +43,7 @@ public class Palavra implements Comparable {
         this.paginas = paginas;
     }
 
-    public void addNovaPagina(Pagina pagina) {
+    public void addNovaPagina(String pagina) {
         paginas.add(pagina);
     }
 

@@ -13,13 +13,9 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.ResourceBundle;
 import javafx.fxml.FXML;
@@ -52,12 +48,15 @@ public class HomeController implements Initializable {
 
     private LinkedList paginasPesquisadas; // Utilzada para armazenar as paginas encontradas durante uma pesquisa;
 
+    private File[] arquivos;
+
     /**
      * Initializes the controller class.
      */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         dicionario = new ArvoreAVL();
+        arquivos = pegarArquivos("arquivos", ".txt");
         // TODO
     }
 
@@ -82,7 +81,6 @@ public class HomeController implements Initializable {
 //        saida.writeObject(dicionario);
 //        saida.close();
 //    }
-
     private Pagina carregarPagina(File arquivo) throws FileNotFoundException, IOException {
         InputStreamReader inputReader = new InputStreamReader(new FileInputStream(arquivo));
         BufferedReader buffer = new BufferedReader(inputReader);
@@ -101,16 +99,16 @@ public class HomeController implements Initializable {
         buffer.close();
         return new Pagina(arquivo.getName(), linhas);
     }
+
     /**
-     * Método responsavel por verificar se uma determinada linha possue uma palavra chave. 
-     * 
+     * Método responsavel por verificar se uma determinada linha possue uma palavra chave.
+     *
      * @param palavra
-     * @return 
+     * @return
      */
-    private boolean possuePalavraChave(String[] palavra){
+    /*private boolean possuePalavraChave(String[] palavra){
         return false;
-    }
-    
+    }*/
     /**
      * Método responsavel por pegar o nome de arquivos de um diretorio seguindo utilizando como filtro a extensão do arquivo.
      *
@@ -141,15 +139,16 @@ public class HomeController implements Initializable {
 
     private LinkedList procurarNosArquivos(File[] arquivos, Palavra[] palavrasChaves) throws IOException {
         LinkedList paginasEncontradas = new LinkedList();
-        for (Palavra chave : palavrasChaves) {
-            for (File arquivo : arquivos) {
-                Pagina pagina = carregarPagina(arquivo);
-                pagina.descobrirMultRelevancia(Palavra.palavraToString(palavrasChaves)); //Calcula a relevancia da pagina atual com base na atual palavra chave pesquisada;
-                if (pagina.temRelevancia()) {
-                    chave.addNovaPagina(pagina);
+        Pagina pagina;
+        for (File arquivo : arquivos) {
+            pagina = carregarPagina(arquivo);
+            pagina.descobrirMultRelevancia(Palavra.palavraToString(palavrasChaves)); //Calcula a relevancia da pagina atual com base na atual palavra chave pesquisada;
+            if (pagina.temRelevancia()) {
+                for (Palavra chave : palavrasChaves) {
+                    chave.addNovaPagina(pagina.getNome());
                     dicionario.inserir(chave); //Adciona a palavra ao dicionario.
                     if (!paginasEncontradas.contains(pagina)) {
-                        paginasEncontradas.add(pagina);
+                        paginasEncontradas.add(pagina.getNome());
                     }
                 }
             }
@@ -165,19 +164,19 @@ public class HomeController implements Initializable {
         se TODAS as palavras existe, caso uma não exista deve-se procurar somente aquelas que
         possue aquela nova palavra juntamente com as demais paginas.
          */
-        LinkedList paginasEncontradas = null;
-        Palavra[] palavrasChaves;
         String palavrasPesquisadas = txtCampoPesquisa.getText();
         if ("".equals(palavrasPesquisadas)) {
             System.out.println("Digite algo");
         } else {
+            LinkedList paginasEncontradas;
+            Palavra[] palavrasChaves;
             palavrasChaves = Palavra.stringToPalavra(palavrasPesquisadas.split(" "));
             paginasEncontradas = verificaDicionario(palavrasChaves);
             if (!paginasEncontradas.isEmpty()) {
                 //paginasPesquisadas = paginasEncontradas;
                 System.out.println("Palavra Estava no dicionario");
             } else {
-                paginasEncontradas = procurarNosArquivos(pegarArquivos("arquivos", ".txt"), palavrasChaves);
+                paginasEncontradas = procurarNosArquivos(arquivos, palavrasChaves);
                 if (paginasEncontradas.isEmpty()) {
                     System.out.println("Palavra não encontrada//Mensagem");
                 } else {
@@ -185,8 +184,9 @@ public class HomeController implements Initializable {
                     System.out.println("Palavra Estava no arquivo");
                 }
             }
+            System.out.println(paginasEncontradas.size());
+            System.out.println(paginasEncontradas);
         }
-        System.out.println(paginasEncontradas);
     }
     //Necessario trabalhar melhor a interação entre strig e as instancias da classe palavra.
     //Durante a pesquisa na arvore é necessario verificar se todas palavras foram encontradas;
