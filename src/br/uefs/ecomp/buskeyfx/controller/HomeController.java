@@ -7,7 +7,7 @@ package br.uefs.ecomp.buskeyfx.controller;
 
 import br.uefs.ecomp.buskeyfx.model.Pagina;
 import br.uefs.ecomp.buskeyfx.model.Palavra;
-import br.uefs.ecomp.buskeyfx.util.ArvoreAVL;
+import br.uefs.ecomp.buskeyfx.util.AVLTree;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileFilter;
@@ -44,7 +44,7 @@ public class HomeController implements Initializable {
     @FXML
     private Button btnCuriosidade;
 
-    private ArvoreAVL dicionario; //estrutura responsavel por armazenar palavras já pesquisada pelo usuario.
+    private AVLTree dicionario; //estrutura responsavel por armazenar palavras já pesquisada pelo usuario.
 
     private LinkedList paginasPesquisadas; // Utilzada para armazenar as paginas encontradas durante uma pesquisa;
 
@@ -55,7 +55,7 @@ public class HomeController implements Initializable {
      */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        dicionario = new ArvoreAVL();
+        dicionario = new AVLTree();
         arquivos = pegarArquivos("arquivos", ".txt");
         // TODO
     }
@@ -68,7 +68,7 @@ public class HomeController implements Initializable {
 //        if (dadosDicionario.length() > 0) {
 //            ObjectInputStream entrada;
 //            entrada = new ObjectInputStream(new FileInputStream(dadosDicionario));
-//            dicionario = (ArvoreAVL) entrada.readObject();
+//            dicionario = (AVLTree) entrada.readObject();
 //            entrada.close();
 //        }
 //    }
@@ -173,14 +173,14 @@ public class HomeController implements Initializable {
             palavrasChaves = Palavra.stringToPalavra(palavrasPesquisadas.split(" "));
             paginasEncontradas = verificaDicionario(palavrasChaves);
             if (!paginasEncontradas.isEmpty()) {
-                //paginasPesquisadas = paginasEncontradas;
+                paginasPesquisadas = paginasEncontradas;
                 System.out.println("Palavra Estava no dicionario");
             } else {
                 paginasEncontradas = procurarNosArquivos(arquivos, palavrasChaves);
                 if (paginasEncontradas.isEmpty()) {
                     System.out.println("Palavra não encontrada//Mensagem");
                 } else {
-                    //paginasPesquisadas = paginasEncontradas;
+                    paginasPesquisadas = paginasEncontradas;
                     System.out.println("Palavra Estava no arquivo");
                 }
             }

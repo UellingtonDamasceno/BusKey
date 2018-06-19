@@ -11,11 +11,11 @@ import java.io.Serializable;
  *
  * @author Uellington Damasceno
  */
-public class ArvoreAVL implements Serializable{
+public class AVLTree implements Serializable{
 
     private Node raiz;
     
-    private class Node {
+    public class Node implements Serializable{
 
         private Comparable dados;
         private int balanceamento;
@@ -73,7 +73,11 @@ public class ArvoreAVL implements Serializable{
             this.direita = direita;
         }
     }
-
+    
+    public Node getRaiz(){
+        return raiz;
+    }
+    
     public boolean estaVazia() {
         return (raiz == null);
     }
@@ -109,7 +113,6 @@ public class ArvoreAVL implements Serializable{
     }
     
     private void inserir(Node palavraAtual, Node palavraInserir) {
-
         if (estaVazia()) {
             this.raiz = palavraInserir;
         } else {
@@ -177,7 +180,7 @@ public class ArvoreAVL implements Serializable{
 
     private void removerNoEncontrado(Node aRemover) {
         Node aux;
-
+        //Verifica se o nó a ser removido é uma folha.
         if (aRemover.getEsquerda() == null || aRemover.getDireita() == null) {
             if (aRemover.getPai() == null) {
                 this.raiz = null;
@@ -185,68 +188,59 @@ public class ArvoreAVL implements Serializable{
             }
             aux = aRemover;
         } else {
+            //Caso contrario ele irá procurar o proximo nó que poderá substituir aquela sub-árvore.
             aux = sucessor(aRemover);
             aRemover.setDados(aux.getDados());
         }
-
-        Node p;
+        Node aux2;
         if (aux.getEsquerda() != null) {
-            p = aux.getEsquerda();
+            aux2 = aux.getEsquerda();
         } else {
-            p = aux.getDireita();
+            aux2 = aux.getDireita();
         }
 
-        if (p != null) {
-            p.setPai(aux.getPai());
+        if (aux2 != null) {
+            aux2.setPai(aux.getPai());
         }
 
         if (aux.getPai() == null) {
-            this.raiz = p;
+            this.raiz = aux2;
         } else {
             if (aux == aux.getPai().getEsquerda()) {
-                aux.getPai().setEsquerda(p);
+                aux.getPai().setEsquerda(aux2);
             } else {
-                aux.getPai().setDireita(p);
+                aux.getPai().setDireita(aux2);
             }
             verBalanceamento(aux.getPai());
         }
     }
 
     private Node rotacaoEsquerda(Node inicial) {
-
         Node direita = inicial.getDireita();
         direita.setPai(inicial.getPai());
-
         inicial.setDireita(direita.getEsquerda());
-
+        
         if (inicial.getDireita() != null) {
             inicial.getDireita().setPai(inicial);
         }
-
         direita.setEsquerda(inicial);
         inicial.setPai(direita);
 
         if (direita.getPai() != null) {
-
             if (direita.getPai().getDireita() == inicial) {
                 direita.getPai().setDireita(direita);
-
             } else if (direita.getPai().getEsquerda() == inicial) {
                 direita.getPai().setEsquerda(direita);
             }
         }
-
         setBalanceamento(inicial);
         setBalanceamento(direita);
-
         return direita;
     }
 
     private Node rotacaoDireita(Node inicial) {
-
         Node esquerda = inicial.getEsquerda();
         esquerda.setPai(inicial.getPai());
-
         inicial.setEsquerda(esquerda.getDireita());
 
         if (inicial.getEsquerda() != null) {
@@ -257,15 +251,12 @@ public class ArvoreAVL implements Serializable{
         inicial.setPai(esquerda);
 
         if (esquerda.getPai() != null) {
-
             if (esquerda.getPai().getDireita() == inicial) {
                 esquerda.getPai().setDireita(esquerda);
-
             } else if (esquerda.getPai().getEsquerda() == inicial) {
                 esquerda.getPai().setEsquerda(esquerda);
             }
         }
-
         setBalanceamento(inicial);
         setBalanceamento(esquerda);
 
@@ -281,7 +272,7 @@ public class ArvoreAVL implements Serializable{
         inicial.setDireita(rotacaoDireita(inicial.getDireita()));
         return rotacaoEsquerda(inicial);
     }
-
+    //Método responsavel por procurar um nó que possa substituir determinado nó caso seja necessario uma remoção.
     private Node sucessor(Node aRemover) {
         if (aRemover.getDireita() != null) {
             Node r = aRemover.getDireita();
