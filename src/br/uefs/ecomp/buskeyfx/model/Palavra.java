@@ -5,13 +5,14 @@
  */
 package br.uefs.ecomp.buskeyfx.model;
 
+import java.io.Serializable;
 import java.util.LinkedList;
 
 /**
  *
  * @author Uellington Damasceno
  */
-public class Palavra implements Comparable {
+public class Palavra implements Comparable, Serializable{
     
     private String palavra;
     private LinkedList paginas;

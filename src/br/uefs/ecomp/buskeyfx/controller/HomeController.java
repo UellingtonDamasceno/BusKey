@@ -18,13 +18,7 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.LinkedList;
 import java.util.ResourceBundle;
-import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.Button;
-import javafx.scene.control.TextField;
-import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.Pane;
 
 /**
  * FXML Controller class
@@ -33,33 +27,24 @@ import javafx.scene.layout.Pane;
  */
 public class HomeController implements Initializable {
 
-    @FXML
-    private AnchorPane baseHome;
-    @FXML
-    private Pane BusKeyHome;
-    @FXML
-    private Button btnPesquisar;
-    @FXML
-    private TextField txtCampoPesquisa;
-    @FXML
-    private Button btnCuriosidade;
-
     private AVLTree dicionario; //estrutura responsavel por armazenar palavras já pesquisada pelo usuario.
-
     private LinkedList paginasPesquisadas; // Utilzada para armazenar as paginas encontradas durante uma pesquisa;
-
     private File[] arquivos;
-
+    private LinkedList log;
     /**
      * Initializes the controller class.
      */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         dicionario = new AVLTree();
+        paginasPesquisadas = new LinkedList();
         arquivos = pegarArquivos("arquivos", ".txt");
-        // TODO
+        log = carregaLog();
     }
 
+    private LinkedList carregaLog(){
+        return null;
+    }
 //    private void carregarDicionario() throws FileNotFoundException, IOException, ClassNotFoundException {
 //        File dadosDicionario = new File("Dicionario.data");
 //        if (!dadosDicionario.exists()) {
@@ -91,7 +76,6 @@ public class HomeController implements Initializable {
             linha = buffer.readLine();
             if (linha != null) {
                 palavras = linha.split(" ");
-                //System.out.println(Arrays.toString(palavras));
                 linhas.add(palavras);
             }
         } while (linha != null);
@@ -127,7 +111,6 @@ public class HomeController implements Initializable {
 
     private LinkedList verificaDicionario(Palavra[] palavrasChaves) {
         LinkedList paginasEncontradas = new LinkedList();
-
         for (Palavra chave : palavrasChaves) {
             System.out.println(chave);
             if (dicionario.contem(chave)) {
@@ -142,30 +125,33 @@ public class HomeController implements Initializable {
         Pagina pagina;
         for (File arquivo : arquivos) {
             pagina = carregarPagina(arquivo);
-            pagina.descobrirMultRelevancia(Palavra.palavraToString(palavrasChaves)); //Calcula a relevancia da pagina atual com base na atual palavra chave pesquisada;
-            if (pagina.temRelevancia()) {
-                for (Palavra chave : palavrasChaves) {
-                    chave.addNovaPagina(pagina.getNome());
-                    dicionario.inserir(chave); //Adciona a palavra ao dicionario.
+            for (Palavra palavraChave : palavrasChaves) {
+                pagina.descobrirRelevancia(palavraChave.getPalavra());
+                if (pagina.temRelevancia()) {//Verifica individualmente se a pagina atual tem relevancia para uma determinada palavra.
+                    palavraChave.addNovaPagina(pagina.getNome());
+                    dicionario.inserir(palavraChave); //Adciona a palavra ao dicionario.
                     if (!paginasEncontradas.contains(pagina)) {
                         paginasEncontradas.add(pagina.getNome());
                     }
                 }
             }
         }
-        //System.out.println(dicionario);
         return paginasEncontradas;
     }
 
-    @FXML
-    private void pesquisar(MouseEvent event) throws IOException, FileNotFoundException, ClassNotFoundException {
+    private boolean arquivosFoiModificados(){
+        
+        return false;
+    }
+    
+    private void pesquisar(String palavrasPesquisadas) throws IOException, FileNotFoundException, ClassNotFoundException {
         /*Antes de pesquisar deve-se verifiar se as palavras chaves que o usuario digitou
         já foram pesquisadas anteriomente. isto é, verificar no "Dicionario" (estutura de dados)
         se TODAS as palavras existe, caso uma não exista deve-se procurar somente aquelas que
         possue aquela nova palavra juntamente com as demais paginas.
          */
-        String palavrasPesquisadas = txtCampoPesquisa.getText();
         if ("".equals(palavrasPesquisadas)) {
+            //Pode retornar uma exceção. tipo: "campoVazioException".
             System.out.println("Digite algo");
         } else {
             LinkedList paginasEncontradas;
