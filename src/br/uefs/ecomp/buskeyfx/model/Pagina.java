@@ -5,6 +5,7 @@
  */
 package br.uefs.ecomp.buskeyfx.model;
 
+import java.io.Serializable;
 import java.util.Iterator;
 import java.util.LinkedList;
 
@@ -12,20 +13,21 @@ import java.util.LinkedList;
  *
  * @author Uellington Damasceno
  */
-public class Pagina implements Comparable {
+public class Pagina implements Comparable, Serializable {
 
     private String nome;
     private LinkedList linhas;
     private int acessos;
     private int relevancia;
-
+    private String previa;
     /*Pode-se tbm utilizar um identifiador da pagina para indicar seu valor de referencia 
      */
-    public Pagina(String nome, LinkedList linhas) {
+    public Pagina(String nome, LinkedList linhas, String previa) {
         this.nome = nome;
         this.linhas = linhas;
         this.relevancia = 0;
         this.acessos = 0;
+        this.previa = previa;
     }
 
     public int getRelevancia() {
@@ -96,5 +98,14 @@ public class Pagina implements Comparable {
     public int compareTo(Object o) {
         Pagina outraPagina = (Pagina) o;
         return this.getRelevancia() - outraPagina.getRelevancia();
+    }
+    
+    @Override
+    public boolean equals(Object o){
+        if(o instanceof Pagina){
+            Pagina outra = (Pagina) o;
+            return outra.getNome().equals(this.getNome());
+        }
+        return false;
     }
 }

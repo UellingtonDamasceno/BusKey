@@ -6,7 +6,13 @@
 package br.uefs.ecomp.buskeyfx.view;
 
 import br.uefs.ecomp.buskeyfx.controller.BuskeyHomeController;
+import br.uefs.ecomp.buskeyfx.model.Pagina;
 import java.io.IOException;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.Optional;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
@@ -16,7 +22,10 @@ import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
@@ -32,7 +41,6 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
@@ -43,7 +51,8 @@ import javafx.stage.Stage;
  */
 public class BusKeyFX extends Application {
 
-    private TabPane principal;
+    private final int NUM_ITENS = 10;
+    private TabPane tabPane;
     private Stage palco;
     private double x, y;
     private final BuskeyHomeController CONTROLLER = new BuskeyHomeController();
@@ -54,75 +63,117 @@ public class BusKeyFX extends Application {
         this.palco = primaryStage;
         palco.setResizable(false);
         this.palco.setTitle("BusKey"); //Responsavel por alterar/indicar o titulo do Palco.
-        Pagination pagination = new Pagination(5, 0);
-        pagination.setPageFactory((Integer pageIndex) -> {
-            ScrollPane sp = new ScrollPane();
-            sp.setPadding(new Insets(15, 20, 10, 50));
-            for (int i = 0; i < pageIndex + 1; i++) {
-                sp.setContent(home());
-            }
-            return sp;
-        });
-        palco.setScene(tabPane(pagination));
+        palco.setScene(inicio());
         palco.show();
     }
-    private void addAba(Parent conteudo){
-        Tab tab = new Tab();
-        tab.setText("Buskey");
-        tab.setContent(conteudo);
-        principal.getTabs().add(tab);
-    }
-//    private void setCenarioPrincipal(String caminhoCenario) throws IOException {
-//        FXMLLoader loader = new FXMLLoader();
-//        loader.setLocation(getClass().getResource(caminhoCenario));
-//        principal = loader.load();
-//        Scene cenario = new Scene(principal); // Cria um cenario com  
-//        palco.setScene(cenario); // Responsavel por indicar qual cenário deverá ser exibido no Palco. 
-//        controlePosicao(principal); // Método responsavel por permitir que o usario possa mover a tela apartir de qualquer ponto que selecionar.
-//        palco.initStyle(StageStyle.TRANSPARENT); //Responsavel por retirar as opções padrões(minimizar, maximizar e fechar) do palco.
-//        palco.show();
-//    }
-    private static BorderPane HomePesquisa() {
-        BorderPane homePesquisa = new BorderPane();
-        StackPane sp = new StackPane();
 
+    private Pagination createPagination(LinkedList resultados) {
+        Pagination pagination = new Pagination(CONTROLLER.PaginasEncontradas().size() / NUM_ITENS, 0);
+        pagination.setPageFactory((Integer pageIndex) -> {
+            return resultadoPesquisa(pageIndex);
+        });
+        return pagination;
+    }
+
+    private void addAba(Parent conteudo, String titulo, boolean barraPesquisa) {
+        Tab tab = new Tab();
+        BorderPane borderPane = new BorderPane();
+        tab.setText(titulo);
+        if (barraPesquisa) {
+            borderPane.setTop(barraPesquisa());
+        }
+        borderPane.setCenter(conteudo);
+        tab.setContent(borderPane);
+        tabPane.getTabs().add(tab);
+    }
+
+    private BorderPane homePesquisa() {
+        BorderPane homePesquisa = new BorderPane();
+        VBox centro = new VBox(20);
+        HBox acoes = new HBox(50);
+
+        centro.setAlignment(Pos.CENTER);
+        acoes.setAlignment(Pos.CENTER);
+
+        TextField txtPesquisa = new TextField();
+        Button curiosidade = new Button("Curiosidade");
+        Button pesquisar = new Button("Pesquisar");
+
+        txtPesquisa.setMaxWidth(300);
+        curiosidade.setMinWidth(80);
+        pesquisar.setMinWidth(80);
+
+        pesquisar.setGraphic(imagem("pesquisar.png", 20, 20));
+        pesquisar.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                pesquisar(txtPesquisa);
+            }
+        });
+
+        acoes.getChildren().addAll(curiosidade, pesquisar);
+        centro.getChildren().addAll(imagem("pesquisar.png", 100, 100), txtPesquisa, acoes);
+        homePesquisa.setCenter(centro);
         return homePesquisa;
     }
 
-    private Scene tabPane(Pagination pagination) {
-        TabPane painelAbas = new TabPane();
-        principal = painelAbas;
-        painelAbas.setFocusTraversable(false);
-        Tab aba2 = new Tab();
-        Tab aba1 = new Tab();
-        BorderPane bp = new BorderPane();
-        bp.setCenter(pagination);
-        bp.setTop(barraPesquisa(painelAbas));
-        aba2.setContent(bp);
-        aba2.setText("Pesquisa 1");
-        aba1.setContent(verNoticia());
-        aba1.setText("Ver Pesquisa");
-        painelAbas.getTabs().addAll(aba2, aba1);
-        return new Scene(painelAbas, 500, 450);
+    private void mudarCena(Parent conteudo, String titulo, boolean barraPesquisa) {
+
+        for (Tab tabAtual : tabPane.getTabs()) {
+            if (tabAtual.isSelected()) {
+                if (barraPesquisa) {
+                    BorderPane bp = new BorderPane();
+                    bp.setTop(barraPesquisa());
+                    bp.setCenter(conteudo);
+                    tabAtual.setContent(bp);
+                }else{
+                    tabAtual.setContent(conteudo);
+                }
+                break;
+            }
+        }
+    }
+
+    private Scene inicio() {
+        tabPane = new TabPane();
+        tabPane.setFocusTraversable(false);
+        Tab abaInicial = new Tab();
+        Tab aux = new Tab();
+
+        abaInicial.setText("Buskey");
+        abaInicial.setContent(homePesquisa());
+        tabPane.getTabs().addAll(abaInicial);
+        System.out.println(abaInicial.isSelected());
+        System.out.println(aux.isSelected());
+        return new Scene(tabPane, 500, 450);
     }
 
     public Stage getPalco() {
         return palco;
     }
 
-    private VBox home() {
+    private ScrollPane resultadoPesquisa(int pageIndex) {
+        ScrollPane scrollPane = new ScrollPane();
+        scrollPane.setPadding(new Insets(15, 20, 10, 50));
         VBox noticias = new VBox();
-        for (int i = 0; i < 10; i++) {
+        int pagina = pageIndex * NUM_ITENS;
+        for (int i = pagina; i < pagina + NUM_ITENS; i++) {
             noticias.getChildren().addAll(noticia(i), new Separator());
         }
         noticias.setAlignment(Pos.CENTER);
         noticias.setSpacing(20);
-        return noticias;
+        scrollPane.setContent(noticias);
+        return scrollPane;
     }
 
-    private Pane noticia(int i) {
+    private VBox noticia(int idNoticia) {
+        Pagina pagina = (Pagina) CONTROLLER.PaginasEncontradas().get(idNoticia);
         VBox noticia = new VBox();
         HBox nomeNoticia = new HBox();
+        Label nome = new Label(pagina.getNome());
+        Label acessos = new Label("Acessos: " + pagina.getAcessos());
+        Label relevancia = new Label("Relevância: " + pagina.getRelevancia());
+        nome.setId(pagina.getNome());
         nomeNoticia.setOnMouseEntered(new EventHandler() {
             @Override
             public void handle(Event event) {
@@ -132,57 +183,54 @@ public class BusKeyFX extends Application {
         nomeNoticia.setOnMouseClicked(new EventHandler() {
             @Override
             public void handle(Event event) {
-                addAba(verNoticia());
-                System.out.println("Abriu a noticia");
+                Pagina encontrada = CONTROLLER.getPagina(nome.getId());
+                mudarCena(verNoticia(encontrada), encontrada.getNome(), false);
             }
         });
-        /*nomeNoticia.setOnMouseEntered(new EventHandler() {
-            @Override
-            public void handle(Event event) {
-                
-            }
-        });*/
-        Label nome = new Label("Nome Da Noticia");
-        nomeNoticia.getChildren().addAll(nome, extra());
+
+        nomeNoticia.getChildren().addAll(nome, extra(nome.getId()));
         nomeNoticia.setSpacing(200);
-        Label acessos = new Label();
-        acessos.setText("Acessos: " + 10);
-        Label relevancia = new Label("Relevância: " + Integer.toString(i));
+
         Label prev = new Label("Aqui será exibido o conteudo do arquivo em uma\npequena previa");
         noticia.getChildren().addAll(nomeNoticia, acessos, relevancia, prev);
         noticia.setSpacing(5);
-        Pane paneNoticia = new Pane();
-        paneNoticia.getChildren().add(noticia);
-        paneNoticia.getOnMouseDragReleased();
-        return paneNoticia;
+
+        return noticia;
     }
 
-    private MenuBar extra() {
+    private MenuBar extra(String monitora) {
         MenuBar ops = new MenuBar();
         Menu menubar = new Menu();
-        menubar.setGraphic(insereImagem("menu.png"));
+        menubar.setGraphic(imagem("menu.png", 20, 20));
         MenuItem editar = new MenuItem("Editar");
         MenuItem deletar = new MenuItem("Deletar");
         MenuItem outraAba = new MenuItem("Abrir em nova aba");
 
-        editar.setGraphic(insereImagem("editar.png"));
-        deletar.setGraphic(insereImagem("deletar.png"));
-        outraAba.setGraphic(insereImagem("addAba.png"));
+        editar.setGraphic(imagem("editar.png", 20, 20));
+        deletar.setGraphic(imagem("deletar.png", 20, 20));
+        outraAba.setGraphic(imagem("addAba.png", 20, 20));
+
+        outraAba.setOnAction(new EventHandler() {
+            @Override
+            public void handle(Event event) {
+                addAba(verNoticia(CONTROLLER.getPagina(monitora)), monitora, false);
+            }
+        });
 
         ops.getMenus().addAll(menubar);
         menubar.getItems().addAll(editar, deletar, outraAba);
         return ops;
     }
 
-    private ImageView insereImagem(String nome) {
+    private ImageView imagem(String nome, double altura, double largura) {
         String url = "/br/uefs/ecomp/buskeyfx/imagens/";
         ImageView icon = new ImageView(new Image(url + nome));
-        icon.setFitHeight(20);
-        icon.setFitWidth(20);
+        icon.setFitHeight(altura);
+        icon.setFitWidth(largura);
         return icon;
     }
 
-    private HBox barraPesquisa(TabPane painelAbas) {
+    private HBox barraPesquisa() {
         HBox pesquisa = new HBox();
 
         Button voltar = new Button();
@@ -201,69 +249,62 @@ public class BusKeyFX extends Application {
         voltar.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
-
+                try {
+                    CONTROLLER.atualizarDicionario();
+                } catch (IOException ex) {
+                }
             }
         });
         pesquisar.setOnAction(new EventHandler() {
             @Override
             public void handle(Event event) {
-                try {
-                    CONTROLLER.pesquisar(barraPesquisa.getText());
-                } catch (IOException ex) {
-
-                }
+                pesquisar(barraPesquisa);
             }
         });
         home.setOnAction(new EventHandler() {
             @Override
             public void handle(Event event) {
-                try {
-                    CONTROLLER.atualizarDicionario();
-                } catch (IOException ex) {
-                    System.out.println("Deu merda na escrita");
-                }
-                System.out.println("Atualizado com Sucesso!!!");
+                mudarCena(homePesquisa(), "Buskey", false);
             }
         });
         adcionarAba.setOnAction(new EventHandler() {
             @Override
             public void handle(Event event) {
-                painelAbas.getTabs().add(new Tab("BuskeyFX - Home"));
+                addAba(homePesquisa(), "Buskey", false);
             }
         });
 
-        pesquisar.setGraphic(insereImagem("pesquisar.png"));
-        frente.setGraphic(insereImagem("frente.png"));
-        home.setGraphic(insereImagem("home.png"));
-        voltar.setGraphic(insereImagem("voltar.png"));
-        adcionarAba.setGraphic(insereImagem("add.png"));
+        pesquisar.setGraphic(imagem("pesquisar.png", 20, 20));
+        frente.setGraphic(imagem("frente.png", 20, 20));
+        home.setGraphic(imagem("home.png", 20, 20));
+        voltar.setGraphic(imagem("voltar.png", 20, 20));
+        adcionarAba.setGraphic(imagem("add.png", 20, 20));
 
         pesquisa.getChildren().addAll(logo, voltar, frente, home, barraPesquisa, pesquisar, adcionarAba);
         return pesquisa;
     }
-    
-    private BorderPane verNoticia() {
+
+    private BorderPane verNoticia(Pagina pagina) {
+        HBox nomePagina = new HBox();
         BorderPane verNoticia = new BorderPane();
-        TextArea txtConteudo = new TextArea();
+        Label lblNome = new Label("Nome Da Pagina: ");
+        TextField txtNome = new TextField(pagina.getNome());
+        TextArea txtConteudo = new TextArea(pagina.getNome());
+
+        nomePagina.getChildren().addAll(lblNome, txtNome);
+        nomePagina.setSpacing(20);
+
         verNoticia.setPadding(new Insets(5, 5, 5, 5));
-        verNoticia.setTop(nomePagina());
+        verNoticia.setTop(nomePagina);
 
         txtConteudo.setPrefSize(420, 380);
         txtConteudo.setEditable(false);
-        
+        txtNome.setEditable(false);
+        txtNome.setMinWidth(250);
+
         verNoticia.setCenter(txtConteudo);
         verNoticia.setRight(opcoesVerNoticia(txtConteudo));
         return verNoticia;
-    }
-
-    private HBox nomePagina() {
-        HBox nomePagina = new HBox();
-        Label lblNome = new Label("Nome Da Pagina: ");
-        TextField txtNome = new TextField();
-        txtNome.setMinWidth(300);
-        nomePagina.getChildren().addAll(lblNome, txtNome);
-        nomePagina.setSpacing(20);
-        return nomePagina;
     }
 
     private VBox opcoesVerNoticia(TextArea txtConteudo) {
@@ -272,9 +313,9 @@ public class BusKeyFX extends Application {
         Button editar = new Button("Editar");
         Button deletar = new Button("Deletar");
         Button salvar = new Button("Salvar");
-        salvar.setGraphic(insereImagem("salvar.png"));
-        deletar.setGraphic(insereImagem("deletar.png"));
-        editar.setGraphic(insereImagem("editar.png"));
+        salvar.setGraphic(imagem("salvar.png", 20, 20));
+        deletar.setGraphic(imagem("deletar.png", 20, 20));
+        editar.setGraphic(imagem("editar.png", 20, 20));
 
         editar.setOnAction(new EventHandler() {
             @Override
@@ -296,13 +337,33 @@ public class BusKeyFX extends Application {
         launch(args);
     }
 
-//    private void controlePosicao(Parent principal) {
-//        principal.setOnMousePressed((MouseEvent event) -> {
-//            x = event.getSceneX();
-//            y = event.getSceneY();
-//        });
-//        principal.setOnMouseDragged((MouseEvent event) -> {
-//            palco.setX(event.getScreenX() - x);
-//            palco.setY(event.getScreenY() - y);
-//        });
+    private void pesquisar(TextField aPesquisar) {
+        try {
+            if (aPesquisar.getText().equals("")) {
+                alerta("Digite algo para ser pesquisado!");
+            } else {
+                LinkedList resultado = CONTROLLER.pesquisar(aPesquisar.getText());
+                mudarCena(createPagination(resultado), aPesquisar.getText(), true);
+            }
+        } catch (IOException ex) {
+            System.out.println("Deu Merda");
+        }
+    }
+
+    private void alerta(String mensagem) {
+        Alert alerta = new Alert(AlertType.INFORMATION);
+        alerta.setTitle("Alerta!");
+        alerta.setHeaderText(null);
+        alerta.setContentText(mensagem);
+        alerta.showAndWait();
+    }
+
+    private boolean alertaConfirma(String mensagem) {
+        Alert alert = new Alert(AlertType.CONFIRMATION);
+        alert.setTitle("Confriamação");
+        alert.setHeaderText("Tem certeza?");
+        alert.setContentText(mensagem);
+        Optional<ButtonType> result = alert.showAndWait();
+        return result.get() == ButtonType.OK;
+    }
 }

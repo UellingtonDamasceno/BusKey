@@ -44,7 +44,7 @@ public class Palavra implements Comparable, Serializable{
         this.paginas = paginas;
     }
 
-    public void addNovaPagina(String pagina) {
+    public void addNovaPagina(Pagina pagina) {
         paginas.add(pagina);
     }
 

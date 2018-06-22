@@ -9,15 +9,19 @@ import br.uefs.ecomp.buskeyfx.model.Pagina;
 import br.uefs.ecomp.buskeyfx.model.Palavra;
 import br.uefs.ecomp.buskeyfx.util.AVLTree;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Writer;
+import java.util.Iterator;
 import java.util.LinkedList;
 
 /**
@@ -56,7 +60,7 @@ public class BuskeyHomeController {
         BufferedReader buffer = new BufferedReader(inputReader);
         LinkedList linhas = new LinkedList();
         String[] palavras;
-        String linha;
+        String linha, previa = "";
         do {
             linha = buffer.readLine();
             if (linha != null) {
@@ -66,7 +70,7 @@ public class BuskeyHomeController {
         } while (linha != null);
         inputReader.close();
         buffer.close();
-        return new Pagina(arquivo.getName(), linhas);
+        return new Pagina(arquivo.getName(), linhas, previa);
     }
 
     private LinkedList procurarNoDicionario(Palavra[] palavrasChaves) {
@@ -84,14 +88,16 @@ public class BuskeyHomeController {
         for (File arquivo : arquivos) {
             pagina = carregarPagina(arquivo);
             for (Palavra palavraChave : palavrasChaves) {
+                System.out.println(palavraChave.getPalavra());
                 pagina.descobrirRelevancia(palavraChave.getPalavra());
                 if (pagina.temRelevancia()) {//Verifica individualmente se a pagina atual tem relevancia para uma determinada palavra.
-                    palavraChave.addNovaPagina(pagina.getNome());
+                    palavraChave.addNovaPagina(pagina);
                     dicionario.inserir(palavraChave); //Adciona a palavra ao dicionario.
                     if (!paginasEncontradas.contains(pagina)) {
-                        paginasEncontradas.add(pagina.getNome());
+                        paginasEncontradas.add(pagina);
                     }
                 }
+                pagina = null;
             }
         }
         return paginasEncontradas;
@@ -118,43 +124,40 @@ public class BuskeyHomeController {
         }
     }
 
-    public void pesquisar(String palavrasPesquisadas) throws IOException, FileNotFoundException {
+    public LinkedList pesquisar(String palavrasPesquisadas) throws IOException, FileNotFoundException {
         /*Antes de pesquisar deve-se verifiar se as palavras chaves que o usuario digitou
         já foram pesquisadas anteriomente. isto é, verificar no "Dicionario" (estutura de dados)
         se TODAS as palavras existe, caso uma não exista deve-se procurar somente aquelas que
         possue aquela nova palavra juntamente com as demais paginas.
          */
-        if ("".equals(palavrasPesquisadas)) {
-            //Pode retornar uma exceção. tipo: "campoVazioException".
-            System.out.println("Digite algo");
-        } else {
-            Palavra[] palavras = Palavra.stringToPalavra(palavrasPesquisadas.split(" "));
-            LinkedList paginasEncontradas;
-            LinkedList noDicionario = new LinkedList();
-            LinkedList noArquivo = new LinkedList();
-            int ondeProcurar = verificaPalavras(palavras, noDicionario, noArquivo);
-            switch (ondeProcurar) {
-                case -1: {
-                    paginasEncontradas = procurarNosArquivos(arquivos, palavras);
-                    break;
-                }
-                case 1: {
-                    paginasEncontradas = procurarNoDicionario(palavras);
-                    break;
-                }
-                default: {
-                    paginasEncontradas = procurarNosArquivos(arquivos, (Palavra[]) noArquivo.toArray(new Palavra[noArquivo.size()]));
-                    paginasEncontradas.addAll(procurarNoDicionario((Palavra[]) noDicionario.toArray(new Palavra[noDicionario.size()])));
-                    break;
-                }
+        Palavra[] palavras = Palavra.stringToPalavra(palavrasPesquisadas.split(" "));
+        LinkedList noDicionario = new LinkedList();
+        LinkedList noArquivo = new LinkedList();
+        int ondeProcurar = verificaPalavras(palavras, noDicionario, noArquivo);
+        switch (ondeProcurar) {
+            case -1: {
+                paginasPesquisadas = procurarNosArquivos(arquivos, palavras);
+                break;
             }
-            System.out.println(paginasEncontradas.size());
-            System.out.println(paginasEncontradas);
+            case 1: {
+                paginasPesquisadas = procurarNoDicionario(palavras);
+                break;
+            }
+            default: {
+                System.out.println(noArquivo);
+                System.out.println(noDicionario);
+                paginasPesquisadas = procurarNosArquivos(arquivos, (Palavra[]) noArquivo.toArray(new Palavra[noArquivo.size()]));
+                paginasPesquisadas.addAll(procurarNoDicionario((Palavra[]) noDicionario.toArray(new Palavra[noDicionario.size()])));
+                break;
+            }
         }
+        System.out.println(paginasPesquisadas.size());
+        System.out.println(paginasPesquisadas);
+        return paginasPesquisadas;
     }
 
     public void carregarDicionario() throws IOException, ClassNotFoundException {
-        File dadosDicionario = new File("arquivos\\Dicionario.data");
+        File dadosDicionario = new File("arquivos\\Dicionario.txt");
         if (!dadosDicionario.exists()) {
             dadosDicionario.createNewFile();
         }
@@ -167,13 +170,37 @@ public class BuskeyHomeController {
     }
 
     public void atualizarDicionario() throws FileNotFoundException, IOException {
-        File dadosDicionario = new File("arquivos\\Dicionario.data");
+        
+        File dadosDicionario = new File("arquivos\\Dicionario.txt");
         if (!dadosDicionario.exists()) {
             dadosDicionario.createNewFile();
+        }else{
+            limparDicionario(dadosDicionario);
         }
         ObjectOutputStream saida;
         saida = new ObjectOutputStream(new FileOutputStream(dadosDicionario));
         saida.writeObject(dicionario);
         saida.close();
+    }
+
+   private void limparDicionario(File registros) throws FileNotFoundException, IOException {
+        Writer clean = new BufferedWriter(new FileWriter(registros));
+        clean.close();
+    }
+
+
+    public LinkedList PaginasEncontradas() {
+        return paginasPesquisadas;
+    }
+
+    public Pagina getPagina(String outroNome) {
+        Iterator lPesquisadas = paginasPesquisadas.iterator();
+        while (lPesquisadas.hasNext()) {
+            Pagina paginaAtual = (Pagina) lPesquisadas.next();
+            if (paginaAtual.getNome().equals(outroNome)) {
+                return paginaAtual;
+            }
+        }
+        return null;
     }
 }
