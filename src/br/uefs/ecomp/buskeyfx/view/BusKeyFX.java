@@ -8,7 +8,6 @@ package br.uefs.ecomp.buskeyfx.view;
 import br.uefs.ecomp.buskeyfx.controller.BuskeyHomeController;
 import br.uefs.ecomp.buskeyfx.model.Pagina;
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Optional;
 import java.util.logging.Level;
@@ -33,6 +32,7 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.Pagination;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Separator;
+import javafx.scene.control.SingleSelectionModel;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TextArea;
@@ -41,7 +41,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
@@ -54,7 +54,6 @@ public class BusKeyFX extends Application {
     private final int NUM_ITENS = 10;
     private TabPane tabPane;
     private Stage palco;
-    private double x, y;
     private final BuskeyHomeController CONTROLLER = new BuskeyHomeController();
 
     @Override
@@ -68,23 +67,11 @@ public class BusKeyFX extends Application {
     }
 
     private Pagination createPagination(LinkedList resultados) {
-        Pagination pagination = new Pagination(CONTROLLER.PaginasEncontradas().size() / NUM_ITENS, 0);
+        Pagination pagination = new Pagination(resultados.size() / NUM_ITENS, 0);
         pagination.setPageFactory((Integer pageIndex) -> {
             return resultadoPesquisa(pageIndex);
         });
         return pagination;
-    }
-
-    private void addAba(Parent conteudo, String titulo, boolean barraPesquisa) {
-        Tab tab = new Tab();
-        BorderPane borderPane = new BorderPane();
-        tab.setText(titulo);
-        if (barraPesquisa) {
-            borderPane.setTop(barraPesquisa());
-        }
-        borderPane.setCenter(conteudo);
-        tab.setContent(borderPane);
-        tabPane.getTabs().add(tab);
     }
 
     private BorderPane homePesquisa() {
@@ -117,39 +104,21 @@ public class BusKeyFX extends Application {
         return homePesquisa;
     }
 
-    private void mudarCena(Parent conteudo, String titulo, boolean barraPesquisa) {
-
-        for (Tab tabAtual : tabPane.getTabs()) {
-            if (tabAtual.isSelected()) {
-                if (barraPesquisa) {
-                    BorderPane bp = new BorderPane();
-                    bp.setTop(barraPesquisa());
-                    bp.setCenter(conteudo);
-                    tabAtual.setContent(bp);
-                }else{
-                    tabAtual.setContent(conteudo);
-                }
-                break;
-            }
-        }
-    }
-
     private Scene inicio() {
         tabPane = new TabPane();
-        tabPane.setFocusTraversable(false);
         Tab abaInicial = new Tab();
-        Tab aux = new Tab();
-
+        abaInicial.setOnCloseRequest(new EventHandler() {
+            @Override
+            public void handle(Event event) {
+                if (tabPane.getTabs().size() == 1) {
+                    event.consume();
+                }
+            }
+        });
         abaInicial.setText("Buskey");
         abaInicial.setContent(homePesquisa());
         tabPane.getTabs().addAll(abaInicial);
-        System.out.println(abaInicial.isSelected());
-        System.out.println(aux.isSelected());
         return new Scene(tabPane, 500, 450);
-    }
-
-    public Stage getPalco() {
-        return palco;
     }
 
     private ScrollPane resultadoPesquisa(int pageIndex) {
@@ -167,13 +136,22 @@ public class BusKeyFX extends Application {
     }
 
     private VBox noticia(int idNoticia) {
-        Pagina pagina = (Pagina) CONTROLLER.PaginasEncontradas().get(idNoticia);
+        String nomePagina = (String)CONTROLLER.paginasEncontradas().get(idNoticia);
+        Pagina pagina;
+        try {
+            pagina = (Pagina) CONTROLLER.getPagina(nomePagina);
+        } catch (IOException ex) {
+            alerta("Erro ao carregar pagina");
+            return null;
+        }
         VBox noticia = new VBox();
         HBox nomeNoticia = new HBox();
         Label nome = new Label(pagina.getNome());
+        nome.setMaxWidth(150);
         Label acessos = new Label("Acessos: " + pagina.getAcessos());
         Label relevancia = new Label("Relevância: " + pagina.getRelevancia());
         nome.setId(pagina.getNome());
+
         nomeNoticia.setOnMouseEntered(new EventHandler() {
             @Override
             public void handle(Event event) {
@@ -183,8 +161,8 @@ public class BusKeyFX extends Application {
         nomeNoticia.setOnMouseClicked(new EventHandler() {
             @Override
             public void handle(Event event) {
-                Pagina encontrada = CONTROLLER.getPagina(nome.getId());
-                mudarCena(verNoticia(encontrada), encontrada.getNome(), false);
+                mudarCena(verNoticia(nome.getId()), retiraNome(nome.getId()), false);
+                
             }
         });
 
@@ -194,11 +172,10 @@ public class BusKeyFX extends Application {
         Label prev = new Label("Aqui será exibido o conteudo do arquivo em uma\npequena previa");
         noticia.getChildren().addAll(nomeNoticia, acessos, relevancia, prev);
         noticia.setSpacing(5);
-
         return noticia;
     }
 
-    private MenuBar extra(String monitora) {
+    private MenuBar extra(String nomePagina) {
         MenuBar ops = new MenuBar();
         Menu menubar = new Menu();
         menubar.setGraphic(imagem("menu.png", 20, 20));
@@ -213,7 +190,7 @@ public class BusKeyFX extends Application {
         outraAba.setOnAction(new EventHandler() {
             @Override
             public void handle(Event event) {
-                addAba(verNoticia(CONTROLLER.getPagina(monitora)), monitora, false);
+                addAba(verNoticia(nomePagina), retiraNome(nomePagina), false);
             }
         });
 
@@ -222,14 +199,9 @@ public class BusKeyFX extends Application {
         return ops;
     }
 
-    private ImageView imagem(String nome, double altura, double largura) {
-        String url = "/br/uefs/ecomp/buskeyfx/imagens/";
-        ImageView icon = new ImageView(new Image(url + nome));
-        icon.setFitHeight(altura);
-        icon.setFitWidth(largura);
-        return icon;
+    private String retiraNome(String aCortar){       
+        return aCortar.substring(aCortar.lastIndexOf("/"));
     }
-
     private HBox barraPesquisa() {
         HBox pesquisa = new HBox();
 
@@ -251,6 +223,7 @@ public class BusKeyFX extends Application {
             public void handle(ActionEvent event) {
                 try {
                     CONTROLLER.atualizarDicionario();
+                    System.out.println("Atualizado com sucesso");
                 } catch (IOException ex) {
                 }
             }
@@ -284,31 +257,32 @@ public class BusKeyFX extends Application {
         return pesquisa;
     }
 
-    private BorderPane verNoticia(Pagina pagina) {
-        HBox nomePagina = new HBox();
+    private BorderPane verNoticia(String nomePagina) {
+        Pagina pagina = null;
+        try {
+            pagina = CONTROLLER.getPagina(nomePagina);
+        } catch (IOException ex) {
+           // alerta("Erro ao CarregarPagina");
+        }
+        HBox hBoxNome = new HBox();
+        VBox opcoes = new VBox();
+        Pane baseConteudo = new Pane();
+        
         BorderPane verNoticia = new BorderPane();
         Label lblNome = new Label("Nome Da Pagina: ");
         TextField txtNome = new TextField(pagina.getNome());
-        TextArea txtConteudo = new TextArea(pagina.getNome());
+        TextArea txtConteudo = new TextArea(pagina.getConteudo());
 
-        nomePagina.getChildren().addAll(lblNome, txtNome);
-        nomePagina.setSpacing(20);
+        hBoxNome.getChildren().addAll(lblNome, txtNome);
+        hBoxNome.setSpacing(20);
 
         verNoticia.setPadding(new Insets(5, 5, 5, 5));
-        verNoticia.setTop(nomePagina);
+        verNoticia.setTop(hBoxNome);
 
-        txtConteudo.setPrefSize(420, 380);
+        txtConteudo.setPrefSize(400, 400);
         txtConteudo.setEditable(false);
         txtNome.setEditable(false);
         txtNome.setMinWidth(250);
-
-        verNoticia.setCenter(txtConteudo);
-        verNoticia.setRight(opcoesVerNoticia(txtConteudo));
-        return verNoticia;
-    }
-
-    private VBox opcoesVerNoticia(TextArea txtConteudo) {
-        VBox opcoes = new VBox();
 
         Button editar = new Button("Editar");
         Button deletar = new Button("Deletar");
@@ -330,8 +304,14 @@ public class BusKeyFX extends Application {
             }
         });
         opcoes.getChildren().addAll(editar, deletar, salvar);
-        return opcoes;
+        
+        baseConteudo.setPadding(new Insets(10, 10, 10, 10));
+        baseConteudo.getChildren().add(txtConteudo);
+        verNoticia.setCenter(baseConteudo);
+        verNoticia.setRight(opcoes);
+        return verNoticia;
     }
+
 
     public static void main(String[] args) {
         launch(args);
@@ -343,11 +323,38 @@ public class BusKeyFX extends Application {
                 alerta("Digite algo para ser pesquisado!");
             } else {
                 LinkedList resultado = CONTROLLER.pesquisar(aPesquisar.getText());
-                mudarCena(createPagination(resultado), aPesquisar.getText(), true);
+                if (resultado.size() < 10) {
+                    VBox resultadoBusca = new VBox(10);
+                    ScrollPane scrollPane = new ScrollPane();
+                    scrollPane.setPadding(new Insets(15, 20, 10, 50));
+                    for (int i = 0; i < resultado.size(); i++) {
+                        resultadoBusca.getChildren().addAll(noticia(i), new Separator());
+                    }
+                    resultadoBusca.setAlignment(Pos.CENTER);
+                    resultadoBusca.setSpacing(20);
+                    scrollPane.setContent(resultadoBusca);
+                    mudarCena(scrollPane, aPesquisar.getText(), true);
+                } else {
+                    mudarCena(createPagination(resultado), aPesquisar.getText(), true);
+                }
             }
         } catch (IOException ex) {
-            System.out.println("Deu Merda");
+           alerta(ex.toString());
         }
+    }
+
+    private void addAba(Parent conteudo, String titulo, boolean barraPesquisa) {
+        Tab tab = new Tab();
+        SingleSelectionModel<Tab> selectionModel = tabPane.getSelectionModel();
+        BorderPane borderPane = new BorderPane();
+        tab.setText(titulo);
+        if (barraPesquisa) {
+            borderPane.setTop(barraPesquisa());
+        }
+        selectionModel.select(tab);
+        borderPane.setCenter(conteudo);
+        tab.setContent(borderPane);
+        tabPane.getTabs().add(tab);
     }
 
     private void alerta(String mensagem) {
@@ -365,5 +372,31 @@ public class BusKeyFX extends Application {
         alert.setContentText(mensagem);
         Optional<ButtonType> result = alert.showAndWait();
         return result.get() == ButtonType.OK;
+    }
+
+    private void mudarCena(Parent conteudo, String titulo, boolean barraPesquisa) {
+        for (Tab tabAtual : tabPane.getTabs()) {
+            if (tabAtual.isSelected()) {
+                if (barraPesquisa) {
+                    BorderPane bp = new BorderPane();
+                    bp.setTop(barraPesquisa());
+                    bp.setCenter(conteudo);
+                    tabAtual.setContent(bp);
+
+                } else {
+                    tabAtual.setContent(conteudo);
+                }
+                tabAtual.setText(titulo);
+                break;
+            }
+        }
+    }
+
+    private ImageView imagem(String nome, double altura, double largura) {
+        String url = "/br/uefs/ecomp/buskeyfx/imagens/";
+        ImageView icon = new ImageView(new Image(url + nome));
+        icon.setFitHeight(altura);
+        icon.setFitWidth(largura);
+        return icon;
     }
 }

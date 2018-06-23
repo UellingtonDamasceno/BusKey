@@ -16,24 +16,23 @@ import java.util.LinkedList;
 public class Pagina implements Comparable, Serializable {
 
     private String nome;
-    private LinkedList linhas;
     private int acessos;
     private int relevancia;
-    private String previa;
+    private transient String conteudo;
+
     /*Pode-se tbm utilizar um identifiador da pagina para indicar seu valor de referencia 
      */
-    public Pagina(String nome, LinkedList linhas, String previa) {
+    public Pagina(String nome, String previa) {
         this.nome = nome;
-        this.linhas = linhas;
         this.relevancia = 0;
         this.acessos = 0;
-        this.previa = previa;
+        this.conteudo = previa;
     }
 
     public int getRelevancia() {
         return relevancia;
-    }   
-    
+    }
+
     public int getAcessos() {
         return acessos;
     }
@@ -50,12 +49,8 @@ public class Pagina implements Comparable, Serializable {
         this.nome = nome;
     }
 
-    public LinkedList getLinhas() {
-        return linhas;
-    }
-
-    public void setLinhas(LinkedList linhas) {
-        this.linhas = linhas;
+    public String getConteudo() {
+        return conteudo;
     }
 
     /**
@@ -65,26 +60,29 @@ public class Pagina implements Comparable, Serializable {
      */
     public void descobrirRelevancia(String palavraChave) {
         int pEncontradas = 0;
-        for (Iterator iLinhas = linhas.iterator(); iLinhas.hasNext();) {
-            String[] palavras = (String[]) iLinhas.next();
-            for (String palavraConteudo : palavras) {
-                if (palavraConteudo.equalsIgnoreCase(palavraChave)) {
-                    pEncontradas++;
-                }
+        String[] palavras = quebraLinhas();
+        for (String palavraConteudo : palavras) {
+            if (palavraConteudo.equalsIgnoreCase(palavraChave)) {
+                pEncontradas++;
             }
         }
-        relevancia = (pEncontradas == 0 || linhas.isEmpty()) ? 0 : pEncontradas;
+        relevancia = pEncontradas;
     }
-    
-    public void descobrirMultRelevancia(String[] palavrasChaves){
-        int relevanciaAtual = relevancia;
-        for(String palavraChave : palavrasChaves){
+
+    public void descobrirMultRelevancia(String[] palavrasChaves) {
+        int relevanciaAtual = 0;
+        for (String palavraChave : palavrasChaves) {
             descobrirRelevancia(palavraChave);
             relevanciaAtual += relevancia;
         }
         relevancia = relevanciaAtual;
     }
-    
+
+    private String[] quebraLinhas() {
+        String[] palavras = conteudo.split(" ");
+        return palavras;
+    }
+
     public boolean temRelevancia() {
         return relevancia > 0;
     }
@@ -99,10 +97,10 @@ public class Pagina implements Comparable, Serializable {
         Pagina outraPagina = (Pagina) o;
         return this.getRelevancia() - outraPagina.getRelevancia();
     }
-    
+
     @Override
-    public boolean equals(Object o){
-        if(o instanceof Pagina){
+    public boolean equals(Object o) {
+        if (o instanceof Pagina) {
             Pagina outra = (Pagina) o;
             return outra.getNome().equals(this.getNome());
         }

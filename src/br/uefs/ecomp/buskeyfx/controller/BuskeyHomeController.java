@@ -58,26 +58,22 @@ public class BuskeyHomeController {
     private Pagina carregarPagina(File arquivo) throws FileNotFoundException, IOException {
         InputStreamReader inputReader = new InputStreamReader(new FileInputStream(arquivo));
         BufferedReader buffer = new BufferedReader(inputReader);
-        LinkedList linhas = new LinkedList();
-        String[] palavras;
-        String linha, previa = "";
+        String linha, conteudo = "";
         do {
             linha = buffer.readLine();
             if (linha != null) {
-                palavras = linha.split(" ");
-                linhas.add(palavras);
+                conteudo += validaConteudo(linha) + "\n";
             }
         } while (linha != null);
         inputReader.close();
         buffer.close();
-        return new Pagina(arquivo.getName(), linhas, previa);
+        return new Pagina(arquivo.getCanonicalPath(), conteudo);
     }
 
     private LinkedList procurarNoDicionario(Palavra[] palavrasChaves) {
         LinkedList paginasEncontradas = new LinkedList();
         for (Palavra palavraChave : palavrasChaves) {
-            System.out.println(palavraChave);
-            paginasEncontradas.addAll(((Palavra) dicionario.buscarPalavra(palavraChave)).getPaginas());
+            paginasEncontradas.addAll(((Palavra) dicionario.buscarPalavra(palavraChave)).getListaDeNomes());
         }
         return paginasEncontradas;
     }
@@ -88,16 +84,18 @@ public class BuskeyHomeController {
         for (File arquivo : arquivos) {
             pagina = carregarPagina(arquivo);
             for (Palavra palavraChave : palavrasChaves) {
-                System.out.println(palavraChave.getPalavra());
                 pagina.descobrirRelevancia(palavraChave.getPalavra());
                 if (pagina.temRelevancia()) {//Verifica individualmente se a pagina atual tem relevancia para uma determinada palavra.
-                    palavraChave.addNovaPagina(pagina);
-                    dicionario.inserir(palavraChave); //Adciona a palavra ao dicionario.
+                    if (!dicionario.contem(palavraChave)) {
+                        dicionario.inserir(palavraChave);
+                    } else {
+                        ((Palavra) dicionario.buscarPalavra(palavraChave)).addNovaPagina(pagina.getNome());
+                    }
+                    palavraChave.addNovaPagina(pagina.getNome());
                     if (!paginasEncontradas.contains(pagina)) {
-                        paginasEncontradas.add(pagina);
+                        paginasEncontradas.add(pagina.getNome());
                     }
                 }
-                pagina = null;
             }
         }
         return paginasEncontradas;
@@ -130,7 +128,8 @@ public class BuskeyHomeController {
         se TODAS as palavras existe, caso uma não exista deve-se procurar somente aquelas que
         possue aquela nova palavra juntamente com as demais paginas.
          */
-        Palavra[] palavras = Palavra.stringToPalavra(palavrasPesquisadas.split(" "));
+        String[] palavrasChaves = validaConteudo(palavrasPesquisadas).split(" ");
+        Palavra[] palavras = Palavra.stringToPalavra(palavrasChaves);
         LinkedList noDicionario = new LinkedList();
         LinkedList noArquivo = new LinkedList();
         int ondeProcurar = verificaPalavras(palavras, noDicionario, noArquivo);
@@ -144,20 +143,23 @@ public class BuskeyHomeController {
                 break;
             }
             default: {
-                System.out.println(noArquivo);
-                System.out.println(noDicionario);
                 paginasPesquisadas = procurarNosArquivos(arquivos, (Palavra[]) noArquivo.toArray(new Palavra[noArquivo.size()]));
                 paginasPesquisadas.addAll(procurarNoDicionario((Palavra[]) noDicionario.toArray(new Palavra[noDicionario.size()])));
                 break;
             }
         }
+        atualizarDicionario();
         System.out.println(paginasPesquisadas.size());
         System.out.println(paginasPesquisadas);
         return paginasPesquisadas;
     }
 
+    private String validaConteudo(String conteudo) {
+        return conteudo.replaceAll("[^A-Za-z0-9 ]", "");
+    }
+
     public void carregarDicionario() throws IOException, ClassNotFoundException {
-        File dadosDicionario = new File("arquivos\\Dicionario.txt");
+        File dadosDicionario = new File("arquivos\\Dicionario.data");
         if (!dadosDicionario.exists()) {
             dadosDicionario.createNewFile();
         }
@@ -170,11 +172,10 @@ public class BuskeyHomeController {
     }
 
     public void atualizarDicionario() throws FileNotFoundException, IOException {
-        
-        File dadosDicionario = new File("arquivos\\Dicionario.txt");
+        File dadosDicionario = new File("arquivos\\Dicionario.data");
         if (!dadosDicionario.exists()) {
             dadosDicionario.createNewFile();
-        }else{
+        } else {
             limparDicionario(dadosDicionario);
         }
         ObjectOutputStream saida;
@@ -183,22 +184,21 @@ public class BuskeyHomeController {
         saida.close();
     }
 
-   private void limparDicionario(File registros) throws FileNotFoundException, IOException {
+    private void limparDicionario(File registros) throws FileNotFoundException, IOException {
         Writer clean = new BufferedWriter(new FileWriter(registros));
         clean.close();
     }
 
-
-    public LinkedList PaginasEncontradas() {
+    public LinkedList paginasEncontradas() {
         return paginasPesquisadas;
     }
-
-    public Pagina getPagina(String outroNome) {
+    
+    public Pagina getPagina(String outroNome) throws IOException {
         Iterator lPesquisadas = paginasPesquisadas.iterator();
         while (lPesquisadas.hasNext()) {
-            Pagina paginaAtual = (Pagina) lPesquisadas.next();
-            if (paginaAtual.getNome().equals(outroNome)) {
-                return paginaAtual;
+            String paginaAtual = (String) lPesquisadas.next();
+            if (paginaAtual.equals(outroNome)) {
+                return carregarPagina(new File(paginaAtual).getAbsoluteFile());
             }
         }
         return null;

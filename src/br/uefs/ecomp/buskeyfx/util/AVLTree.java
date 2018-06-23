@@ -91,13 +91,10 @@ public class AVLTree implements Serializable{
             return null;
         } else {
             if (palavraBuscada.compareTo(palavraAtual.getDados()) == 0) {
-                //System.out.println("Encontrado :::: "  + palavraAtual);
                 return palavraAtual.getDados();
             } else if (palavraBuscada.compareTo(palavraAtual.getDados()) < 0) {
-                //System.out.println("esquerda");
                 return buscarPalavra(palavraAtual.getEsquerda(), palavraBuscada);
             } else {
-                //System.out.println("direita");
                 return buscarPalavra(palavraAtual.getDireita(), palavraBuscada);
             }
         }
