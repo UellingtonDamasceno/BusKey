@@ -3,10 +3,14 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/C:/Users/Dell/Google%20Drive/UEFS/2º%20Semestre/MI%20de%20Programação/Problema%2003/BusKeyFX/src/br/uefs/ecomp/buskeyfx/controller/BuskeyHomeController.java</file>
-            <file>file:/C:/Users/Dell/Google%20Drive/UEFS/2º%20Semestre/MI%20de%20Programação/Problema%2003/BusKeyFX/src/br/uefs/ecomp/buskeyfx/util/PaginaComparator.java</file>
-            <file>file:/C:/Users/Dell/Google%20Drive/UEFS/2º%20Semestre/MI%20de%20Programação/Problema%2003/BusKeyFX/src/br/uefs/ecomp/buskeyfx/model/Pagina.java</file>
+            <file>file:/C:/Users/Dell/Google%20Drive/UEFS/2º%20Semestre/MI%20de%20Programação/Problema%2003/BusKeyFX/src/br/uefs/ecomp/buskeyfx/view/ViewHomePesquisa.java</file>
+            <file>file:/C:/Users/Dell/Google%20Drive/UEFS/2º%20Semestre/MI%20de%20Programação/Problema%2003/BusKeyFX/src/br/uefs/ecomp/buskeyfx/view/ViewBarraPesquisa.java</file>
+            <file>file:/C:/Users/Dell/Google%20Drive/UEFS/2º%20Semestre/MI%20de%20Programação/Problema%2003/BusKeyFX/src/br/uefs/ecomp/buskeyfx/view/Noticia.java</file>
+            <file>file:/C:/Users/Dell/Google%20Drive/UEFS/2º%20Semestre/MI%20de%20Programação/Problema%2003/BusKeyFX/src/br/uefs/ecomp/buskeyfx/view/ViewResultado.java</file>
+            <file>file:/C:/Users/Dell/Google%20Drive/UEFS/2º%20Semestre/MI%20de%20Programação/Problema%2003/BusKeyFX/src/br/uefs/ecomp/buskeyfx/view/VerNoticia.java</file>
+            <file>file:/C:/Users/Dell/Google%20Drive/UEFS/2º%20Semestre/MI%20de%20Programação/Problema%2003/BusKeyFX/src/br/uefs/ecomp/buskeyfx/controller/BuskeyPesquisaController.java</file>
             <file>file:/C:/Users/Dell/Google%20Drive/UEFS/2º%20Semestre/MI%20de%20Programação/Problema%2003/BusKeyFX/src/br/uefs/ecomp/buskeyfx/view/BusKeyFX.java</file>
+            <file>file:/C:/Users/Dell/Google%20Drive/UEFS/2º%20Semestre/MI%20de%20Programação/Problema%2003/BusKeyFX/src/br/uefs/ecomp/buskeyfx/view/ViewHelper.java</file>
         </group>
     </open-files>
 </project-private>

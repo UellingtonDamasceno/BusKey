@@ -5,86 +5,112 @@
  */
 package br.uefs.ecomp.buskeyfx.model;
 
-import java.util.Iterator;
-import java.util.LinkedList;
+import java.io.Serializable;
 
 /**
  *
  * @author Uellington Damasceno
  */
-public class Pagina implements Comparable {
+public class Pagina implements Comparable, Serializable {
 
     private String nome;
-    private LinkedList linhas;
+    private String endereco;
+    private double modificacao;
     private int acessos;
     private int relevancia;
+    private transient String conteudo; //Marcador utilizado para indicar que não deve ser impresso.
 
-    /*Pode-se tbm utilizar um identifiador da pagina para indicar seu valor de referencia 
-     */
-    public Pagina(String nome, LinkedList linhas) {
-        this.nome = nome;
-        this.linhas = linhas;
+    public Pagina(String endereco, double modificacao, String conteudo) {
+        this.nome = retiraNome(endereco);
+        this.endereco = endereco;
         this.relevancia = 0;
         this.acessos = 0;
+        this.conteudo = conteudo;
     }
-
-    public int getRelevancia() {
-        return relevancia;
-    }   
     
     public int getAcessos() {
         return acessos;
     }
-
-    public void setAcessos(int acessos) {
+    
+    public void addAcessos(int acessos) {
         this.acessos += acessos;
     }
 
     public String getNome() {
         return nome;
     }
-
-    public void setNome(String nome) {
-        this.nome = nome;
+    
+    public String getEndereco(){
+        return endereco;
+    }
+    
+    public String getConteudo() {
+        return conteudo;
+    }
+    
+    public int getRelevancia() {
+        return relevancia;
+    }
+    
+    public String getPrevia() {
+        return tiraPrevia();
     }
 
-    public LinkedList getLinhas() {
-        return linhas;
+    public boolean temRelevancia(String palavraChave) {
+        descobrirRelevancia(palavraChave);
+        return (relevancia > 0);
     }
-
-    public void setLinhas(LinkedList linhas) {
-        this.linhas = linhas;
+    
+    public boolean temRelevancia(String[] palavrasChaves){
+        descobrirRelevancia(palavrasChaves);
+        return (relevancia > 0);
     }
-
+    
     /**
      * Método responsavel por caucular a relevância de uma pagina com base nas palavrs chaves.
      *
      * @param palavraChave Palavras utilizadas como criterio de pontuação de relevância.
      */
-    public void descobrirRelevancia(String palavraChave) {
+    private void descobrirRelevancia(String palavraChave) {
         int pEncontradas = 0;
-        for (Iterator iLinhas = linhas.iterator(); iLinhas.hasNext();) {
-            String[] palavras = (String[]) iLinhas.next();
-            for (String palavraConteudo : palavras) {
-                if (palavraConteudo.equalsIgnoreCase(palavraChave)) {
-                    pEncontradas++;
-                }
+        String[] palavras = quebraLinhas();
+        for (String palavraConteudo : palavras) {
+            if (palavraConteudo.equalsIgnoreCase(palavraChave)) {
+                pEncontradas++;
             }
         }
-        relevancia = (pEncontradas == 0 || linhas.isEmpty()) ? 0 : pEncontradas;
+        relevancia = pEncontradas;
     }
     
-    public void descobrirMultRelevancia(String[] palavrasChaves){
-        int relevanciaAtual = relevancia;
-        for(String palavraChave : palavrasChaves){
+    private void descobrirRelevancia(String[] palavrasChaves) {
+        int relevanciaAtual = 0;
+        for (String palavraChave : palavrasChaves) {
             descobrirRelevancia(palavraChave);
             relevanciaAtual += relevancia;
         }
         relevancia = relevanciaAtual;
     }
-    
-    public boolean temRelevancia() {
-        return relevancia > 0;
+
+    private String tiraPrevia() {
+        if (conteudo.isEmpty()) {
+            return "!!!PAGINA SEM CONTEUDO!!!";
+        } else {
+            int tamanho = (conteudo.length() > 100) ? 100 : conteudo.length();
+            String sup = "";
+            for (int i = 0; i < tamanho; i++) {
+                sup += !(i == 50) ? conteudo.charAt(i) : "\n";
+            }
+            return sup + "...";
+        }
+    }
+
+    private String retiraNome(String aCortar) {
+        return aCortar.substring((aCortar.lastIndexOf("\\") + 1));
+    }
+
+    private String[] quebraLinhas() {
+        String[] palavras = conteudo.split(" ");
+        return palavras;
     }
 
     @Override
@@ -96,5 +122,14 @@ public class Pagina implements Comparable {
     public int compareTo(Object o) {
         Pagina outraPagina = (Pagina) o;
         return this.getRelevancia() - outraPagina.getRelevancia();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o instanceof Pagina) {
+            Pagina outra = (Pagina) o;
+            return outra.getNome().equals(this.getNome());
+        }
+        return false;
     }
 }

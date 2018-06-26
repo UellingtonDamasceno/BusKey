@@ -15,17 +15,18 @@ import java.util.LinkedList;
 public class Palavra implements Comparable, Serializable{
     
     private String palavra;
-    private LinkedList paginas;
+    private int pesquisas;
+    private LinkedList listaDeNomes;
     
     public Palavra(String palavra, LinkedList paginas) {
         this(palavra);
-        this.paginas = paginas;
-        
+        this.pesquisas = 0;
+        this.listaDeNomes = paginas;   
     }
 
     public Palavra(String palavra) {
         this.palavra = palavra;
-        this.paginas = new LinkedList();
+        this.listaDeNomes = new LinkedList();
     }
 
     public String getPalavra() {
@@ -36,24 +37,24 @@ public class Palavra implements Comparable, Serializable{
         this.palavra = palavra;
     }
 
-    public LinkedList getPaginas() {
-        return paginas;
+    public LinkedList getListaDeNomes() {
+        return listaDeNomes;
     }
 
     public void setPaginas(LinkedList paginas) {
-        this.paginas = paginas;
+        this.listaDeNomes = paginas;
     }
 
-    public void addNovaPagina(String pagina) {
-        paginas.add(pagina);
+    public void addNovaPagina(String nomePagina) {
+        listaDeNomes.add(nomePagina);
     }
 
     public boolean contemPagina(Pagina pagina) {
-        return paginas.contains(pagina);
+        return listaDeNomes.contains(pagina);
     }
 
     public Object removerPagina(Pagina pagina) {
-        return paginas.remove(pagina);
+        return listaDeNomes.remove(pagina);
     }
     
     public static Palavra[] stringToPalavra(String[] string){

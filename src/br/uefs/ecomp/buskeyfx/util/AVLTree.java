@@ -5,17 +5,23 @@
  */
 package br.uefs.ecomp.buskeyfx.util;
 
+import br.uefs.ecomp.buskeyfx.model.Palavra;
 import java.io.Serializable;
+import java.util.ConcurrentModificationException;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.Stack;
 
 /**
  *
  * @author Uellington Damasceno
  */
-public class AVLTree implements Serializable{
+public class AVLTree implements Serializable {
 
     private Node raiz;
-    
-    public class Node implements Serializable{
+    private int tamanho;
+
+    public class Node implements Serializable {
 
         private Comparable dados;
         private int balanceamento;
@@ -27,12 +33,12 @@ public class AVLTree implements Serializable{
             this.dados = dados;
             this.balanceamento = 0;
         }
-        
+
         @Override
-        public String toString(){
+        public String toString() {
             return dados.toString();
         }
-        
+
         public int getBalanceamento() {
             return balanceamento;
         }
@@ -73,15 +79,15 @@ public class AVLTree implements Serializable{
             this.direita = direita;
         }
     }
-    
-    public Node getRaiz(){
+
+    public Node getRaiz() {
         return raiz;
     }
-    
+
     public boolean estaVazia() {
         return (raiz == null);
     }
-    
+
     public Object buscarPalavra(Comparable palavra) {
         return buscarPalavra(raiz, palavra);
     }
@@ -91,36 +97,37 @@ public class AVLTree implements Serializable{
             return null;
         } else {
             if (palavraBuscada.compareTo(palavraAtual.getDados()) == 0) {
-                //System.out.println("Encontrado :::: "  + palavraAtual);
                 return palavraAtual.getDados();
             } else if (palavraBuscada.compareTo(palavraAtual.getDados()) < 0) {
-                System.out.println("esquerda");
                 return buscarPalavra(palavraAtual.getEsquerda(), palavraBuscada);
             } else {
-                System.out.println("direita");
                 return buscarPalavra(palavraAtual.getDireita(), palavraBuscada);
             }
         }
     }
 
+    public void insereMult(Comparable[] palavras) {
+        for (Comparable palavra : palavras) {
+            inserir(palavra);
+        }
+    }
+
     public void inserir(Comparable palavra) {
-        Node palavraAinserir = new Node(palavra);
-        inserir(this.raiz, palavraAinserir);
+        Node aInserir = new Node(palavra);
+        inserir(this.raiz, aInserir);
     }
-    
-    public boolean contem(Comparable palavra){
-        return estaVazia() ? false : (buscarPalavra(palavra) != null);
-    }
-    
+
     private void inserir(Node palavraAtual, Node palavraInserir) {
         if (estaVazia()) {
             this.raiz = palavraInserir;
+            tamanho++;
         } else {
             if (palavraInserir.getDados().compareTo(palavraAtual.getDados()) < 0) {
                 if (palavraAtual.getEsquerda() == null) {
                     palavraAtual.setEsquerda(palavraInserir);
                     palavraInserir.setPai(palavraAtual);
                     verBalanceamento(palavraAtual);
+                    tamanho++;
                 } else {
                     inserir(palavraAtual.getEsquerda(), palavraInserir);
                 }
@@ -129,11 +136,16 @@ public class AVLTree implements Serializable{
                     palavraAtual.setDireita(palavraInserir);
                     palavraInserir.setPai(palavraAtual);
                     verBalanceamento(palavraAtual);
+                    tamanho++;
                 } else {
                     inserir(palavraAtual.getDireita(), palavraInserir);
                 }
             }
         }
+    }
+
+    public boolean contem(Comparable palavra) {
+        return estaVazia() ? false : (buscarPalavra(palavra) != null);
     }
 
     private void verBalanceamento(Node atual) {
@@ -213,13 +225,14 @@ public class AVLTree implements Serializable{
             }
             verBalanceamento(aux.getPai());
         }
+        tamanho--;
     }
 
     private Node rotacaoEsquerda(Node inicial) {
         Node direita = inicial.getDireita();
         direita.setPai(inicial.getPai());
         inicial.setDireita(direita.getEsquerda());
-        
+
         if (inicial.getDireita() != null) {
             inicial.getDireita().setPai(inicial);
         }
@@ -272,6 +285,7 @@ public class AVLTree implements Serializable{
         inicial.setDireita(rotacaoDireita(inicial.getDireita()));
         return rotacaoEsquerda(inicial);
     }
+
     //Método responsavel por procurar um nó que possa substituir determinado nó caso seja necessario uma remoção.
     private Node sucessor(Node aRemover) {
         if (aRemover.getDireita() != null) {
@@ -296,19 +310,61 @@ public class AVLTree implements Serializable{
         }
         if (aVerificar.getEsquerda() == null && aVerificar.getDireita() == null) {
             return 0;
-        } 
-        else if (aVerificar.getEsquerda() == null) {
+        } else if (aVerificar.getEsquerda() == null) {
             return 1 + altura(aVerificar.getDireita());
-        } 
-        else if (aVerificar.getDireita() == null) {
+        } else if (aVerificar.getDireita() == null) {
             return 1 + altura(aVerificar.getEsquerda());
-        } 
-        else {
+        } else {
             return 1 + Math.max(altura(aVerificar.getEsquerda()), altura(aVerificar.getDireita()));
         }
     }
 
     private void setBalanceamento(Node no) {
         no.setBalanceamento(altura(no.getDireita()) - altura(no.getEsquerda()));
+    }
+
+    public LinkedList toList() {
+        LinkedList lista = new LinkedList();
+        toList(raiz, lista);
+        return lista;
+    }
+
+    private void toList(Node no, LinkedList lista) {
+        if (no == null) {
+            return;
+        }
+        toList(no.getEsquerda(), lista);
+        lista.add(no.getDados());
+        toList(no.getDireita(), lista);
+    }
+
+    public Iterator<Comparable> iterator() {
+        
+        final Stack<Node> stack = new Stack<>();
+        stack.push(raiz);
+
+        return new Iterator<Comparable>() {
+            Node suporte = raiz;
+
+            @Override
+            public boolean hasNext() {
+                return raiz != null && !stack.isEmpty();
+            }
+
+            @Override
+            public Comparable next() {
+                while (suporte != null && suporte.getEsquerda() != null) {
+                    stack.push(suporte.getEsquerda());
+                    suporte = suporte.getEsquerda();
+                }
+                Node atual = stack.pop();
+                if (atual.getDireita() != null) {
+                    stack.push(atual.getDireita());
+                    suporte = atual.getDireita();
+                }
+
+                return atual.getDados();
+            }
+        };
     }
 }
