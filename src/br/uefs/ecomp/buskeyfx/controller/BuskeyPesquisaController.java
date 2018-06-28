@@ -5,9 +5,8 @@
  */
 package br.uefs.ecomp.buskeyfx.controller;
 
-import br.uefs.ecomp.buskeyfx.model.Pagina;
-import br.uefs.ecomp.buskeyfx.model.Palavra;
-import br.uefs.ecomp.buskeyfx.util.AVLTree;
+import br.uefs.ecomp.buskeyfx.model.*;
+import br.uefs.ecomp.buskeyfx.util.*;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -33,10 +32,12 @@ public class BuskeyPesquisaController {
     private AVLTree dicionario; //estrutura responsavel por armazenar palavras já pesquisada pelo usuario.
     private File[] arquivos;
     private LinkedList log;
+    private final QuickSort quick;
 
     public BuskeyPesquisaController() {
         dicionario = new AVLTree();
         arquivos = pegarArquivos("arquivos", ".txt");
+        quick = new QuickSort();
         log = carregaLog();
     }
 
@@ -53,7 +54,7 @@ public class BuskeyPesquisaController {
         return diretorio.listFiles(filtro);
     }
 
-    private Pagina carregarPagina(File arquivo) throws FileNotFoundException, IOException {
+    public String carregaConteudo(File arquivo) throws FileNotFoundException, IOException {
         InputStreamReader inputReader = new InputStreamReader(new FileInputStream(arquivo));
         BufferedReader buffer = new BufferedReader(inputReader);
         String linha, conteudo = "";
@@ -65,29 +66,34 @@ public class BuskeyPesquisaController {
         } while (linha != null);
         inputReader.close();
         buffer.close();
-        return new Pagina(arquivo.getCanonicalPath(), arquivo.lastModified(), conteudo);
+        return conteudo;
     }
-    
+
     private LinkedList procurarNoDicionario(Palavra[] palavrasChaves) {
-        LinkedList paginasEncontradas = new LinkedList();
+        LinkedList<Pagina> paginasEncontradas = new LinkedList();
         for (Palavra palavraChave : palavrasChaves) {
-            paginasEncontradas.addAll(((Palavra) dicionario.buscarPalavra(palavraChave)).getListaDeNomes());
+            Palavra palavraEncontrada = ((Palavra) dicionario.buscarPalavra(palavraChave));
+            paginasEncontradas.addAll(palavraEncontrada.getListaPagina());
         }
         return paginasEncontradas;
     }
 
     private LinkedList procurarNosArquivos(File[] arquivos, Palavra[] palavrasChaves) throws IOException {
-        LinkedList paginasEncontradas = new LinkedList();
-        Pagina pagina;
+        LinkedList<Pagina> paginasEncontradas = new LinkedList();
+
         dicionario.insereMult(palavrasChaves);
         for (File arquivo : arquivos) {
-            pagina = BuskeyPesquisaController.this.carregarPagina(arquivo);
+            Pagina pagina;
+            String conteudo = carregaConteudo(arquivo);
             for (Palavra palavraChave : palavrasChaves) {
-                if (pagina.temRelevancia(palavraChave.getPalavra())) {//Verifica individualmente se a pagina atual tem relevancia para uma determinada palavra.
-                    ((Palavra) dicionario.buscarPalavra(palavraChave)).addNovaPagina(pagina.getEndereco());
+                int relevancia = descobrirRelevancia(palavraChave, conteudo.split(" "));
+                if (relevancia > 0) {//Verifica individualmente se a pagina atual tem relevancia para uma determinada palavra.
+                    pagina = new Pagina(arquivo.getCanonicalPath(), arquivo.lastModified(), conteudo);
+                    ((Palavra) dicionario.buscarPalavra(palavraChave)).addNovaPagina(pagina);
                     if (!paginasEncontradas.contains(pagina)) {
-                        paginasEncontradas.add(pagina.getEndereco());
+                        paginasEncontradas.add(pagina);
                     }
+                    pagina.setRelevancia(descobrirRelevancia(palavrasChaves, pagina));
                 }
             }
         }
@@ -98,6 +104,7 @@ public class BuskeyPesquisaController {
     private int verificaPalavras(Palavra[] palavrasChaves, LinkedList dic, LinkedList arq) {
         boolean soArquivo = true, soDicionario = true;
         for (Palavra palavraAtual : palavrasChaves) {
+            palavraAtual.addPesquisa();
             if (!dicionario.contem(palavraAtual)) {
                 arq.add(palavraAtual);
                 soDicionario = false;
@@ -114,58 +121,61 @@ public class BuskeyPesquisaController {
             return 0;
         }
     }
-    
-    private boolean podeInserir(Pagina pagina){
-        for(File atual : arquivos){
-            if(atual.getName().equals(pagina.getNome())){
+
+    private boolean podeInserir(Pagina pagina) {
+        for (File atual : arquivos) {
+            if (atual.getName().equals(pagina.getNome())) {
                 return false;
             }
         }
         return true;
     }
-    
-    public void imprimeArvore(){
+
+    public void imprimeArvore() {
         Iterator iPalavras = dicionario.iterator();
-        while(iPalavras.hasNext()){
+        while (iPalavras.hasNext()) {
             Palavra palavraAtual = (Palavra) iPalavras.next();
+            System.out.println(palavraAtual);
+            System.out.println(palavraAtual.getPesquisa());
         }
     }
-    
-    public void adcionarPagina(Pagina pagina){
-        if(podeInserir(pagina)){
+
+    public void adcionarPagina(Pagina pagina) {
+        if (podeInserir(pagina)) {
             verificaAlteracao(pagina);
-        }else{
+        } else {
             //lancar exceção;
         }
     }
-    
-    public void verificaAlteracao(Pagina pagina){
+
+    public void verificaAlteracao(Pagina pagina) {
         Iterator lPalavras = dicionario.iterator();
-        while(lPalavras.hasNext()){
+        while (lPalavras.hasNext()) {
             Palavra palavraAtual = (Palavra) lPalavras.next();
-            if(pagina.temRelevancia(palavraAtual.getPalavra())){
-                palavraAtual.addNovaPagina(pagina.getNome());
+            int relevancia = descobrirRelevancia(palavraAtual, pagina.getConteudo().split(" "));
+            if (relevancia > 0) {
+                palavraAtual.addNovaPagina(pagina);
             }
         }
     }
-    
-    public void removerPagina(Pagina pagina){
+
+    public void removerPagina(Pagina pagina) {
         Iterator lPalavras = dicionario.iterator();
-        while(lPalavras.hasNext()){
+        while (lPalavras.hasNext()) {
             Palavra palavraAtual = (Palavra) lPalavras.next();
-            if(palavraAtual.contemPagina(pagina)){
+            if (palavraAtual.contemPagina(pagina)) {
                 palavraAtual.removerPagina(pagina);
             }
         }
         movePagina(pagina);
     }
-    
-    public LinkedList pesquisar(String palavrasPesquisadas) throws IOException, FileNotFoundException {
+
+    public LinkedList pesquisar(String palavrasPesquisadas, String ordem) throws IOException, FileNotFoundException {
         String[] palavrasChaves = validaConteudo(palavrasPesquisadas).split(" ");
         Palavra[] palavras = Palavra.stringToPalavra(palavrasChaves);
         LinkedList noDicionario = new LinkedList();
         LinkedList noArquivo = new LinkedList();
-        LinkedList paginasEncontradas;
+        LinkedList<Comparable> paginasEncontradas;
         int ondeProcurar = verificaPalavras(palavras, noDicionario, noArquivo);
         switch (ondeProcurar) {
             case -1: {
@@ -182,39 +192,35 @@ public class BuskeyPesquisaController {
                 break;
             }
         }
-        //descobreRelevancia(palavrasChaves, paginasPesquisadas);
         atualizarDicionario();
-        System.out.println(paginasEncontradas.size());
-        return paginasEncontradas;
+        return ordena(paginasEncontradas, ordem);
+    }
+
+    private LinkedList ordena(LinkedList paginas, String ordem) {
+        Comparable[] arrayPaginas = new Comparable[paginas.size()];
+        paginas.toArray(arrayPaginas);
+        quick.quickSort(arrayPaginas, 0, arrayPaginas.length - 1);
+        LinkedList aux = new LinkedList();
+        for (Comparable atual : arrayPaginas) {
+            switch (ordem) {
+                case "R+":
+                case "Maior Relevancia": {
+                    aux.addLast(atual);
+                    break;
+                }
+                case "R-":
+                case "Menor Relevancia": {
+                    aux.addFirst(atual);
+                    break;
+                }
+            }
+        }
+        return aux;
     }
 
     private String validaConteudo(String conteudo) {
-        return conteudo.replaceAll("[^A-Za-z0-9 ]", "");
+        return conteudo.replaceAll("[^A-Za-z0-9áàâçaéèêíìîóòôúçñÁÀÂÉÈÊÍÌÓÔÚÇÑ\\s ]", "");
     }
-
-    public Pagina carregarPagina(int index, LinkedList resultado) throws IOException{
-        return encontraPagina((String) resultado.get(index), resultado);
-    }
-    
-    private Pagina encontraPagina(String outroNome, LinkedList resultado) throws IOException {
-        Iterator lPesquisadas = resultado.iterator();
-        while (lPesquisadas.hasNext()) {
-            String paginaAtual = (String) lPesquisadas.next();
-            if (paginaAtual.equals(outroNome)) {
-                return this.carregarPagina(new File(paginaAtual).getAbsoluteFile());
-            }
-        }
-        return null;
-    }
-
-   /*private void descobreRelevancia(String[] palavrasChaves, LinkedList paginasPesquisadas) throws IOException {
-        Iterator lPagEncontradas = paginasPesquisadas.iterator();
-        while (lPagEncontradas.hasNext()) {
-            String caminho = (String) lPagEncontradas.next();
-            Pagina paginaAtual = carregarPagina(caminho);
-            paginaAtual.temRelevancia(palavrasChaves);
-        }
-    }*/
 
     public void carregarDicionario() throws IOException, ClassNotFoundException {
         criaDiretorio("resources");
@@ -232,7 +238,7 @@ public class BuskeyPesquisaController {
 
     /*Pode da erro por que mudei o nome do endereço e tals.*/
     public void atualizarDicionario() throws FileNotFoundException, IOException {
-        File dadosDicionario = new File(criaDiretorio("resources").getAbsolutePath() +"\\Dicionario.data");
+        File dadosDicionario = new File(criaDiretorio("resources").getAbsolutePath() + "\\Dicionario.data");
         if (!dadosDicionario.exists()) {
             dadosDicionario.createNewFile();
         } else {
@@ -243,13 +249,13 @@ public class BuskeyPesquisaController {
         saida.writeObject(dicionario);
         saida.close();
     }
-    
+
     private File criaDiretorio(String nome) {
         File diretorio = new File(nome);
         if (!diretorio.exists()) {
             if (diretorio.mkdir()) {
                 //Lançar exeção
-            }else{
+            } else {
                 return diretorio;
             }
         }
@@ -264,5 +270,24 @@ public class BuskeyPesquisaController {
     private void movePagina(Pagina pagina) {
         File arquivo = new File(pagina.getNome());
         arquivo.renameTo(new File(criaDiretorio("resources\\paginas removidas").getAbsolutePath(), arquivo.getName()));
+    }
+
+    private int descobrirRelevancia(Palavra palavraChave, String[] palavras) {
+        int pEncontradas = 0;
+        for (String palavraConteudo : palavras) {
+            if (palavraConteudo.equalsIgnoreCase(palavraChave.getPalavra())) {
+                pEncontradas++;
+            }
+        }
+        return pEncontradas;
+    }
+
+    private int descobrirRelevancia(Palavra[] palavrasChaves, Pagina pagina) {
+        int relevanciaAtual = 0;
+        String[] palavras = pagina.getConteudo().split(" ");
+        for (Palavra palavraChave : palavrasChaves) {
+            relevanciaAtual += descobrirRelevancia(palavraChave, palavras);
+        }
+        return relevanciaAtual;
     }
 }

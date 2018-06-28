@@ -12,21 +12,15 @@ import java.util.LinkedList;
  *
  * @author Uellington Damasceno
  */
-public class Palavra implements Comparable, Serializable{
-    
+public class Palavra implements Comparable, Serializable {
+
     private String palavra;
     private int pesquisas;
-    private LinkedList listaDeNomes;
-    
-    public Palavra(String palavra, LinkedList paginas) {
-        this(palavra);
-        this.pesquisas = 0;
-        this.listaDeNomes = paginas;   
-    }
+    private LinkedList<Pagina> paginas;
 
     public Palavra(String palavra) {
         this.palavra = palavra;
-        this.listaDeNomes = new LinkedList();
+        this.paginas = new LinkedList();
     }
 
     public String getPalavra() {
@@ -37,42 +31,50 @@ public class Palavra implements Comparable, Serializable{
         this.palavra = palavra;
     }
 
-    public LinkedList getListaDeNomes() {
-        return listaDeNomes;
+    public LinkedList getListaPagina() {
+        return paginas;
     }
 
-    public void setPaginas(LinkedList paginas) {
-        this.listaDeNomes = paginas;
+    public void setPaginas(LinkedList<Pagina> paginas) {
+        this.paginas = paginas;
     }
 
-    public void addNovaPagina(String nomePagina) {
-        listaDeNomes.add(nomePagina);
+    public int getPesquisa() {
+        return pesquisas;
+    }
+
+    public void addPesquisa() {
+        this.pesquisas++;
+    }
+
+    public void addNovaPagina(Pagina pagina) {
+        paginas.add(pagina);
     }
 
     public boolean contemPagina(Pagina pagina) {
-        return listaDeNomes.contains(pagina);
+        return paginas.contains(pagina);
     }
 
     public Object removerPagina(Pagina pagina) {
-        return listaDeNomes.remove(pagina);
+        return paginas.remove(pagina);
     }
-    
-    public static Palavra[] stringToPalavra(String[] string){
+
+    public static Palavra[] stringToPalavra(String[] string) {
         Palavra[] suporte = new Palavra[string.length];
-        for(int i = 0; i < string.length; i++){
+        for (int i = 0; i < string.length; i++) {
             suporte[i] = new Palavra(string[i]);
         }
         return suporte;
     }
-    
-    public static String[] palavraToString(Palavra[] palavras){
+
+    public static String[] palavraToString(Palavra[] palavras) {
         String[] suporte = new String[palavras.length];
-        for(int i = 0; i < palavras.length; i++){
+        for (int i = 0; i < palavras.length; i++) {
             suporte[i] = palavras[i].getPalavra();
         }
         return suporte;
     }
-    
+
     @Override
     public int compareTo(Object o) {
         Palavra outra = (Palavra) o;

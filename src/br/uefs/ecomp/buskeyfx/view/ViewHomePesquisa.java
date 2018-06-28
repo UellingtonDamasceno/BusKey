@@ -5,25 +5,24 @@
  */
 package br.uefs.ecomp.buskeyfx.view;
 
-import br.uefs.ecomp.buskeyfx.controller.BuskeyPesquisaController;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Parent;
+import javafx.scene.Cursor;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.Separator;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
-import javafx.scene.text.Text;
 
 /**
  *
@@ -33,10 +32,11 @@ public class ViewHomePesquisa {
 
     ViewHelper helper;
     BorderPane homePesquisa;
-    private final BuskeyPesquisaController CONTROLLER = new BuskeyPesquisaController();
+    ComboBox opcoesPesquisas;
 
     public ViewHomePesquisa(ViewHelper helper) {
         homePesquisa = new BorderPane();
+        this.opcoesPesquisas = new ComboBox();
         this.helper = helper;
     }
 
@@ -50,28 +50,33 @@ public class ViewHomePesquisa {
 
         TextField txtPesquisa = new TextField();
 
-        Button pesquisar = helper.createButton("", "pesquisar.png", 50, 20);
-
+        Button pesquisar = new Button();
+        pesquisar.setGraphic(helper.imagem("pesquisar.png", 20, 20));
         homePesquisa.setTop(opcoes());
 
         txtPesquisa.setMaxWidth(300);
         txtPesquisa.setMinWidth(300);
-//        curiosidade.setMinWidth(80);
-//        pesquisar.setMinWidth(80);
 
         pesquisar.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
-                helper.pesquisar(CONTROLLER, txtPesquisa.getText());
+                helper.pesquisar(txtPesquisa.getText(), opcoesPesquisas.getValue().toString());
             }
         });
 
+        txtPesquisa.setOnKeyPressed(new EventHandler<KeyEvent>() {
+            @Override
+            public void handle(KeyEvent event) {
+                if (event.getCode().equals(KeyCode.ENTER)) {
+                    helper.pesquisar(txtPesquisa.getText(), opcoesPesquisas.getValue().toString());
+                }
+            }
+
+        });
         acoes.getChildren().addAll(txtPesquisa, pesquisar);
         centro.getChildren().addAll(helper.imagem("pesquisar.png", 100, 100), acoes);
         homePesquisa.setCenter(centro);
-        //homePesquisa.setLeft(lateral());
-        //homePesquisa.getLeft().setVisible(false);
-
+        homePesquisa.setBottom(rodape());
         return homePesquisa;
     }
 
@@ -101,7 +106,17 @@ public class ViewHomePesquisa {
         qtd.setMaxWidth(50);
 
         Button listar = new Button();
+        listar.setId(opcao);
         listar.setGraphic(helper.imagem("pesquisar.png", 15, 15));
+
+        listar.setOnAction(new EventHandler() {
+            @Override
+            public void handle(Event event) {
+                System.out.println(qtd.getText());
+                System.out.println(listar.getId());
+            }
+        });
+
         base.setPadding(new Insets(0, 5, 0, 10));
         hbBase.getChildren().addAll(qtd, listar);
 
@@ -110,19 +125,19 @@ public class ViewHomePesquisa {
     }
 
     private HBox opcoes() {
-        
+
         HBox base = new HBox(160);
-        HBox baseButton = new HBox(5);
+        HBox baseButton = new HBox(20);
         HBox hbOpPesquisa = new HBox(5);
-        
+
         Label pesquisarPor = new Label("Pesquisar por: ");
-        ComboBox opcoesPesquisas = new ComboBox();
         Button sliderVem = new Button();
         Button sliderVai = new Button();
-        
+
         sliderVem.setVisible(false);
-        sliderVem.setTooltip(new Tooltip("Top - K!"));
+        sliderVem.setTooltip(new Tooltip("Fechar slider"));
         sliderVem.setGraphic(helper.imagem("voltar.png", 20, 20));
+
         sliderVem.setOnMouseClicked(new EventHandler() {
             @Override
             public void handle(Event event) {
@@ -131,8 +146,8 @@ public class ViewHomePesquisa {
                 sliderVai.setVisible(true);
             }
         });
-        
-        sliderVai.setTooltip(new Tooltip("Top - K!"));
+
+        sliderVai.setTooltip(new Tooltip("Abrir slider"));
         sliderVai.setGraphic(helper.imagem("frente.png", 20, 20));
         sliderVai.setOnMouseClicked(new EventHandler() {
             @Override
@@ -143,10 +158,7 @@ public class ViewHomePesquisa {
             }
         });
 
-        opcoesPesquisas.getItems().addAll("Maior Relevancia",
-                "Menor Relevancia",
-                "Mais Acessos",
-                "Menos Acessos");
+        opcoesPesquisas.getItems().addAll("Maior Relevancia", "Menor Relevancia");
         opcoesPesquisas.setValue("Maior Relevancia");
 
         base.setPadding(new Insets(10, 10, 10, 10));
@@ -158,4 +170,55 @@ public class ViewHomePesquisa {
         base.getChildren().addAll(baseButton, hbOpPesquisa);
         return base;
     }
+
+    private VBox rodape() {
+
+        VBox rodape = new VBox();
+        rodape.setPadding(new Insets(0, 0, 20, 0));
+        rodape.setAlignment(Pos.CENTER);
+
+        Label contexto = new Label("Desenvolvido por: ");
+        Label linkGitU = new Label("https://github.com/UellingtonDamasceno");
+        Label linkGitI = new Label("https://github.com/invanildo99gomes");
+        linkGitU.setGraphic(helper.imagem("github.png", 25, 25));
+        linkGitI.setGraphic(helper.imagem("github.png", 25, 25));
+        linkGitU.setFont(Font.font("Verdana", 10));
+        linkGitI.setFont(Font.font("Verdana", 10));
+        rodape.getChildren().addAll(contexto, linkGitU, linkGitI);
+
+        contexto.setVisible(false);
+        linkGitU.setVisible(false);
+        linkGitI.setVisible(false);
+
+        linkGitU.setOnMouseEntered(new EventHandler() {
+            @Override
+            public void handle(Event event) {
+                linkGitU.setCursor(Cursor.HAND);
+            }
+        });
+        linkGitI.setOnMouseEntered(new EventHandler() {
+            @Override
+            public void handle(Event event) {
+                linkGitI.setCursor(Cursor.HAND);
+            }
+        });
+        rodape.setOnMouseEntered(new EventHandler() {
+            @Override
+            public void handle(Event event) {
+                contexto.setVisible(true);
+                linkGitU.setVisible(true);
+                linkGitI.setVisible(true);
+            }
+        });
+        rodape.setOnMouseExited(new EventHandler() {
+            @Override
+            public void handle(Event event) {
+                contexto.setVisible(false);
+                linkGitU.setVisible(false);
+                linkGitI.setVisible(false);
+            }
+        });
+        return rodape;
+    }
+
 }

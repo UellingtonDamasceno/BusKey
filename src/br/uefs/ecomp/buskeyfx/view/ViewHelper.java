@@ -11,15 +11,19 @@ import java.util.LinkedList;
 import java.util.Optional;
 import javafx.event.Event;
 import javafx.event.EventHandler;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.SingleSelectionModel;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.VBox;
 
 /**
  *
@@ -28,32 +32,25 @@ import javafx.scene.layout.BorderPane;
 public class ViewHelper {
 
     private TabPane tabPane;
- 
-    public ViewHelper(TabPane tabPane) {
+    private final BuskeyPesquisaController CONTROLLER;
+
+    public ViewHelper(TabPane tabPane, BuskeyPesquisaController CONTROLLER) {
         this.tabPane = tabPane;
+        this.CONTROLLER = CONTROLLER;
     }
 
-    void pesquisar(BuskeyPesquisaController c, String aPesquisar) {
+    public BuskeyPesquisaController getController() {
+        return CONTROLLER;
+    }
+
+    void pesquisar(String aPesquisar, String ordem) {
         try {
             if (aPesquisar.equals("")) {
                 alerta("Digite algo para ser pesquisado!");
             } else {
-                LinkedList resultado = c.pesquisar(aPesquisar);
+                LinkedList resultado = CONTROLLER.pesquisar(aPesquisar, ordem);
                 if (!resultado.isEmpty()) {
-                    if (resultado.size() < 10) {
-//                        VBox resultadoBusca = new VBox(10);
-//                        ScrollPane scrollPane = new ScrollPane();
-//                        scrollPane.setPadding(new Insets(15, 20, 10, 50));
-//                        for (int i = 0; i < resultado.size(); i++) {
-//                            resultadoBusca.getChildren().addAll(noticia(i), new Separator());
-//                        }
-//                        resultadoBusca.setAlignment(Pos.CENTER);
-//                        resultadoBusca.setSpacing(20);
-//                        scrollPane.setContent(resultadoBusca);
-//                        mudarCena(scrollPane, aPesquisar, true);
-                    } else {
-                        getTabAtual(aPesquisar).setContent(new ViewResultado(resultado, this).createPagination());
-                    }
+                    getTabAtual(aPesquisar).setContent(new ViewResultado(resultado, this).createPagination());
                 } else {
                     alerta("Palavra não foi encontrada");
                 }

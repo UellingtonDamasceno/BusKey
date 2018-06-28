@@ -22,21 +22,17 @@ import javafx.scene.layout.VBox;
  */
 public class Noticia {
 
-    private Pagina pagina;
     private ViewHelper helper;
-    private VerNoticia novaNoticia;
     
-    Noticia(Pagina pagina, ViewHelper helper) {
-        this.pagina = pagina;
+    Noticia(ViewHelper helper) {
         this.helper = helper;
-        this.novaNoticia = new VerNoticia(pagina, helper);
     }
 
-    protected VBox gerarNoticia() {
-
+    protected VBox gerarNoticia(Pagina pagina) {
+        
         VBox baseNoticia = new VBox();
         HBox nomeNoticia = new HBox();
-        
+        VerNoticia novaNoticia = new VerNoticia(pagina, helper);
         Label nome = new Label(pagina.getNome());
         Label acessos = new Label("Acessos: " + pagina.getAcessos());
         Label relevancia = new Label("Relevância: " + pagina.getRelevancia());
@@ -50,11 +46,10 @@ public class Noticia {
         nomeNoticia.setOnMouseClicked(new EventHandler<Event>() {
             @Override
             public void handle(Event event) {
-                
                 helper.getTabAtual("Pesquisa: " + pagina.getNome()).setContent(novaNoticia.gerar(false));
             }
         });
-        nomeNoticia.getChildren().addAll(nome, extra());
+        nomeNoticia.getChildren().addAll(nome, extra(pagina));
         nomeNoticia.setSpacing(200);
         Label prev = new Label(pagina.getPrevia());
         baseNoticia.getChildren().addAll(nomeNoticia, acessos, relevancia, prev);
@@ -62,7 +57,7 @@ public class Noticia {
         return baseNoticia;
     }
 
-    private MenuBar extra() {
+    private MenuBar extra(Pagina pagina) {
         MenuBar ops = new MenuBar();
         Menu menubar = new Menu();
         menubar.setGraphic(helper.imagem("menu.png", 20, 20));

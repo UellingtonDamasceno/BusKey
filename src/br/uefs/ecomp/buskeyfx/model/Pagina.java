@@ -13,8 +13,8 @@ import java.io.Serializable;
  */
 public class Pagina implements Comparable, Serializable {
 
-    private String nome;
-    private String endereco;
+    private final String nome;
+    private final String endereco;
     private double modificacao;
     private int acessos;
     private int relevancia;
@@ -23,72 +23,74 @@ public class Pagina implements Comparable, Serializable {
     public Pagina(String endereco, double modificacao, String conteudo) {
         this.nome = retiraNome(endereco);
         this.endereco = endereco;
-        this.relevancia = 0;
-        this.acessos = 0;
         this.conteudo = conteudo;
-    }
-    
-    public int getAcessos() {
-        return acessos;
-    }
-    
-    public void addAcessos(int acessos) {
-        this.acessos += acessos;
     }
 
     public String getNome() {
         return nome;
     }
-    
-    public String getEndereco(){
+
+    public String getEndereco() {
         return endereco;
     }
-    
-    public String getConteudo() {
-        return conteudo;
+
+    public double getModificacao() {
+        return modificacao;
     }
-    
+
+    public void setModificacao(double modificacao) {
+        this.modificacao = modificacao;
+    }
+
+    public int getAcessos() {
+        return acessos;
+    }
+
+    public void setAcessos(int acessos) {
+        this.acessos = acessos;
+    }
+
     public int getRelevancia() {
         return relevancia;
     }
-    
-    public String getPrevia() {
-        return tiraPrevia();
+
+    public void setRelevancia(int relevancia) {
+        this.relevancia = relevancia;
     }
 
-    public boolean temRelevancia(String palavraChave) {
-        descobrirRelevancia(palavraChave);
-        return (relevancia > 0);
+    public String getConteudo() {
+        return conteudo;
+    }
+
+    public void setConteudo(String conteudo) {
+        this.conteudo = conteudo;
+    }
+
+    public void addAcessos(int acessos) {
+        this.acessos += acessos;
     }
     
-    public boolean temRelevancia(String[] palavrasChaves){
-        descobrirRelevancia(palavrasChaves);
-        return (relevancia > 0);
+    public String getPrevia(){
+        return tiraPrevia();
     }
     
-    /**
-     * Método responsavel por caucular a relevância de uma pagina com base nas palavrs chaves.
-     *
-     * @param palavraChave Palavras utilizadas como criterio de pontuação de relevância.
-     */
-    private void descobrirRelevancia(String palavraChave) {
+    private int descobrirRelevancia(String palavraChave) {
         int pEncontradas = 0;
-        String[] palavras = quebraLinhas();
+        String[] palavras = conteudo.split(" ");
         for (String palavraConteudo : palavras) {
             if (palavraConteudo.equalsIgnoreCase(palavraChave)) {
                 pEncontradas++;
             }
         }
-        relevancia = pEncontradas;
+        return pEncontradas;
     }
-    
-    private void descobrirRelevancia(String[] palavrasChaves) {
+
+    private int descobrirRelevancia(String[] palavrasChaves) {
         int relevanciaAtual = 0;
         for (String palavraChave : palavrasChaves) {
-            descobrirRelevancia(palavraChave);
-            relevanciaAtual += relevancia;
+            relevanciaAtual +=  descobrirRelevancia(palavraChave);
         }
-        relevancia = relevanciaAtual;
+        return relevanciaAtual;
     }
 
     private String tiraPrevia() {
@@ -106,11 +108,6 @@ public class Pagina implements Comparable, Serializable {
 
     private String retiraNome(String aCortar) {
         return aCortar.substring((aCortar.lastIndexOf("\\") + 1));
-    }
-
-    private String[] quebraLinhas() {
-        String[] palavras = conteudo.split(" ");
-        return palavras;
     }
 
     @Override

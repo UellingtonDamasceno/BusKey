@@ -7,18 +7,13 @@ package br.uefs.ecomp.buskeyfx.view;
 
 import br.uefs.ecomp.buskeyfx.controller.BuskeyPesquisaController;
 import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javafx.application.Application;
 import javafx.event.Event;
 import javafx.event.EventHandler;
-import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.SingleSelectionModel;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.image.Image;
-import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 
 /**
@@ -35,9 +30,9 @@ public class BusKeyFX extends Application {
     @Override
     public void start(Stage primaryStage) {
         tabPane = new TabPane();
-        helper = new ViewHelper(tabPane);
+        helper = new ViewHelper(tabPane, CONTROLLER);
         palco = primaryStage;
-
+        
         try {
             CONTROLLER.carregarDicionario();
         } catch (IOException | ClassNotFoundException ex) {

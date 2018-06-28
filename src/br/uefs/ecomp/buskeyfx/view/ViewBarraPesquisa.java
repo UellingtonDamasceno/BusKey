@@ -5,28 +5,26 @@
  */
 package br.uefs.ecomp.buskeyfx.view;
 
-import br.uefs.ecomp.buskeyfx.controller.BuskeyPesquisaController;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
-import javafx.scene.control.Label;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
-import javafx.scene.text.Font;
-import javafx.scene.text.FontPosture;
 
 /**
  *
  * @author Uellington Damasceno
  */
 class ViewBarraPesquisa {
-
+ 
     private ViewHelper helper;
-    private final BuskeyPesquisaController CONTROLLER = new BuskeyPesquisaController();
 
     public ViewBarraPesquisa(ViewHelper helper) {
         this.helper = helper;
@@ -40,27 +38,40 @@ class ViewBarraPesquisa {
         Button home = new Button();
         Button pesquisar = new Button();
         Button adcionarAba = new Button();
-
+        ComboBox ordem = new ComboBox();
+        ordem.setMinHeight(25);
+        ordem.setMinWidth(30);
+        ordem.getItems().addAll("R+", "R-");
+        ordem.setValue("R+");
+        ordem.setTooltip(new Tooltip("Ordem de relevancia"));
+        
         TextField barraPesquisa = new TextField();
-        Label logo = new Label("BusKey");
-        logo.setFont(Font.font("Verdana", FontPosture.REGULAR, 20));
-
+        
         pesquisa.setPadding(new Insets(5, 5, 5, 5));
         pesquisa.setSpacing(10);
         pesquisa.setAlignment(Pos.CENTER_LEFT);
-
-        voltar.setOnAction(new EventHandler<ActionEvent>() {
+        
+        barraPesquisa.setOnKeyPressed(new EventHandler<KeyEvent>(){
             @Override
-            public void handle(ActionEvent event) {
-                CONTROLLER.imprimeArvore();
+            public void handle(KeyEvent event) {
+                if(event.getCode().equals(KeyCode.ENTER)){
+                    helper.pesquisar(barraPesquisa.getText(), ordem.getValue().toString());
+                }
             }
+            
         });
+        
+        voltar.setOnAction((ActionEvent event) -> {
+            helper.getController().imprimeArvore();
+        });
+        
         pesquisar.setOnAction(new EventHandler() {
             @Override
             public void handle(Event event) {
-                helper.pesquisar(CONTROLLER, barraPesquisa.getText());
+                helper.pesquisar(barraPesquisa.getText(), ordem.getValue().toString());
             }
         });
+        
         home.setOnAction(new EventHandler() {
             @Override
             public void handle(Event event) {
@@ -86,7 +97,7 @@ class ViewBarraPesquisa {
         voltar.setTooltip(new Tooltip("Em desenvolvimento"));
         adcionarAba.setTooltip(new Tooltip("Nova aba"));
 
-        pesquisa.getChildren().addAll(logo, voltar, frente, home, barraPesquisa, pesquisar, adcionarAba);
+        pesquisa.getChildren().addAll(helper.imagem("B.png", 20, 20), voltar, frente, home, barraPesquisa, pesquisar, ordem, adcionarAba);
         return pesquisa;
     }
 }
