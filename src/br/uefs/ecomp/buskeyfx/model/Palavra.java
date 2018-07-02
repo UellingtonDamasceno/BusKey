@@ -20,6 +20,7 @@ public class Palavra implements Comparable, Serializable {
 
     public Palavra(String palavra) {
         this.palavra = palavra;
+        pesquisas = 0;
         this.paginas = new LinkedList();
     }
 
@@ -31,7 +32,7 @@ public class Palavra implements Comparable, Serializable {
         this.palavra = palavra;
     }
 
-    public LinkedList getListaPagina() {
+    public LinkedList<Pagina> getListaPagina() {
         return paginas;
     }
 
@@ -44,7 +45,8 @@ public class Palavra implements Comparable, Serializable {
     }
 
     public void addPesquisa() {
-        this.pesquisas++;
+        pesquisas += 1;
+        System.out.println(this + " Add -> " + pesquisas);
     }
 
     public void addNovaPagina(Pagina pagina) {

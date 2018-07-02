@@ -5,11 +5,14 @@
  */
 package br.uefs.ecomp.buskeyfx.view;
 
+import br.uefs.ecomp.buskeyfx.facade.FacadeBuskeyfx;
 import br.uefs.ecomp.buskeyfx.model.Pagina;
+import java.io.IOException;
 import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
@@ -19,105 +22,144 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
+
 /**
  *
  * @author Uellington Damasceno
  */
 public class VerNoticia {
-    Pagina pagina;
-    ViewHelper helper;
-    
-    public VerNoticia(Pagina pagina, ViewHelper helper){
-        this.pagina = pagina;
-        this.helper = helper;
-    }
-    
-    protected BorderPane gerar(boolean editavel) {
-        pagina.addAcessos(1);
-        System.out.println(pagina.getAcessos());
-        HBox hBoxNome = new HBox();
-        VBox opcoes = new VBox(20);
-        Pane baseConteudo = new Pane();
 
-        BorderPane verNoticia = new BorderPane();
+    private FacadeBuskeyfx facade;
+    private Pagina pagina;
+    private TextArea txtConteudo;
+    private TextField txtNome;
+    private Parent voltar;
+            
+    public VerNoticia(Parent voltar) {
+        facade = FacadeBuskeyfx.getInstance();
+        txtNome = new TextField();
+        txtConteudo = new TextArea();
+        this.voltar = voltar;
+    }
+
+    public VerNoticia(Pagina pagina, Parent voltar) {
+        this(voltar);
+        this.pagina = pagina;
+    }
+
+    protected BorderPane gerar(boolean editavel) {
+        HBox hBoxNome = new HBox();
+        VBox vbOpcoes = new VBox(20);
+        BorderPane bpNoticia = new BorderPane();
+        Pane pBase = new Pane();
+
         Label lblNome = new Label("Nome Da Pagina: ");
-        TextField txtNome = new TextField(pagina.getNome());
-        TextArea txtConteudo = new TextArea(pagina.getConteudo());
+        if (pagina != null) {
+            pagina.addAcessos();
+            txtNome = new TextField(pagina.getNome());
+            txtConteudo = new TextArea(pagina.getTextoConteudo());
+            txtNome.setEditable(false);
+        } else {
+            txtNome.setEditable(true);
+        }
 
         hBoxNome.getChildren().addAll(lblNome, txtNome);
         hBoxNome.setSpacing(20);
 
-        verNoticia.setPadding(new Insets(5, 5, 5, 5));
-        verNoticia.setTop(hBoxNome);
+        bpNoticia.setPadding(new Insets(5, 5, 5, 5));
+        bpNoticia.setTop(hBoxNome);
 
         txtConteudo.setPrefSize(400, 400);
         txtConteudo.setEditable(editavel);
-        txtNome.setEditable(false);
         txtNome.setMinWidth(250);
 
-        Button editar = helper.createButton("Editar", "editar.png", 95, 35);
-        Button voltar = helper.createButton("Deletar", "deletar.png", 95, 35);
-        Button cancelar = helper.createButton("Cancelar", "cancelar.png", 100, 30);
-        Button salvar = helper.createButton("Salvar", "salvar.png", 95, 35);
+        Button bntEditar = Helper.createButton("Editar", "editar.png", 95, 35);
+        Button bntVoltar = Helper.createButton("Voltar", "voltar.png", 95, 35);
+        Button bntCancelar = Helper.createButton("Cancelar", "cancelar.png", 100, 30);
+        Button bntSalvar = Helper.createButton("Salvar", "salvar.png", 95, 35);
 
-        txtNome.setTooltip(new Tooltip("Caminho absoluto do arquivo"));
-        editar.setTooltip(new Tooltip("Editar conteudo"));
-        voltar.setTooltip(new Tooltip("Voltar para resultado"));
-        cancelar.setTooltip(new Tooltip("Cancelar edição"));
-        salvar.setTooltip(new Tooltip("Salvar alterações"));
+        txtNome.setTooltip(new Tooltip("Nome da noticia"));
+        bntEditar.setTooltip(new Tooltip("Editar conteudo"));
+        bntVoltar.setTooltip(new Tooltip("Voltar para resultado"));
+        bntCancelar.setTooltip(new Tooltip("Cancelar edição"));
+        bntSalvar.setTooltip(new Tooltip("Salvar alterações"));
 
-        salvar.setVisible(editavel);
-        cancelar.setVisible(editavel);
-       
-        editar.setOnAction(new EventHandler() {
+        bntSalvar.setVisible(editavel);
+        bntCancelar.setVisible(editavel);
+
+        bntEditar.setOnAction(new EventHandler() {
             @Override
             public void handle(Event event) {
-                txtConteudo.setEditable(true);
-                cancelar.setVisible(true);
-                salvar.setVisible(true);
-            }
-        });
-        
-        voltar.setOnAction(new EventHandler() {
-            @Override
-            public void handle(Event event) {
-            
-            }
-        });
-        
-        cancelar.setOnAction(new EventHandler() {
-            @Override
-            public void handle(Event event) {
-                if(!pagina.getConteudo().equals(txtConteudo.getText())){
-                    txtConteudo.setText(pagina.getConteudo());
+                if (pagina == null) {
+                    txtNome.setEditable(true);
                 }
-                txtConteudo.setEditable(false);
-                cancelar.setVisible(false);
-                salvar.setVisible(false);
+                txtConteudo.setEditable(true);
+                bntCancelar.setVisible(true);
+                bntSalvar.setVisible(true);
             }
         });
-        salvar.setOnAction(new EventHandler() {
+
+        bntVoltar.setOnAction(new EventHandler() {
+            @Override
+            public void handle(Event event) {
+                Helper.mudaConteudoTab("Home", voltar);
+            }
+        });
+
+        bntCancelar.setOnAction(new EventHandler() {
+            @Override
+            public void handle(Event event) {
+                if (pagina != null && !pagina.getTextoConteudo().equals(txtConteudo.getText())) {
+                    txtConteudo.setText(pagina.getTextoConteudo());
+                }
+                txtNome.setEditable(false);
+                txtConteudo.setEditable(false);
+                bntCancelar.setVisible(false);
+                bntSalvar.setVisible(false);
+            }
+        });
+
+        bntSalvar.setOnAction(new EventHandler() {
             @Override
             public void handle(Event event) {
                 if (txtConteudo.getText().equals("")) {
-                    helper.alerta("Campo vazio!");
-                    //CONTROLLER.editarPag(pagina, txtConteudo);
-                } else if (pagina.getConteudo().equals(txtConteudo.getText())) {
-                    helper.alerta("Não ouve alteração!");
-                    event.consume();
+                    Helper.alerta("Campo vazio!");
                 } else {
-                    System.out.println("Salvou");
+                    if (pagina != null) {
+                        if (pagina.getTextoConteudo().equals(txtConteudo.getText())) {
+                            Helper.alerta("Não ouve alteração!");
+                            event.consume();
+                        } else {
+                            System.out.println("Salvou");
+                        }
+                    } else {
+                        try {
+                            boolean add = facade.adcionarPagina(txtNome.getText(), txtConteudo.getText());
+                                if (add) {
+                                    Helper.alerta("Pagina Adcionada com sucesso!");
+                                    txtNome.setText("");
+                                    txtConteudo.setText("");
+                                } else {
+                                    Helper.alerta("Erro ao adcionar pagina");
+                                }
+                                Helper.mudaConteudoTab("Home", voltar);
+                            } catch (IOException ex) {
+                                Helper.alerta("Erro ao abrir o arquivo!");
+                            }
+                    }
                 }
             }
         });
 
-        opcoes.setAlignment(Pos.TOP_CENTER);
-        opcoes.getChildren().addAll(editar, voltar, cancelar, salvar);
+        vbOpcoes.setAlignment(Pos.TOP_CENTER);
 
-        baseConteudo.setPadding(new Insets(10, 10, 10, 10));
-        baseConteudo.getChildren().add(txtConteudo);
-        verNoticia.setCenter(baseConteudo);
-        verNoticia.setRight(opcoes);
-        return verNoticia;
+        vbOpcoes.getChildren().addAll(bntVoltar, bntEditar, bntCancelar, bntSalvar);
+
+        pBase.setPadding(new Insets(10, 10, 10, 10));
+        pBase.getChildren().add(txtConteudo);
+        bpNoticia.setCenter(pBase);
+
+        bpNoticia.setRight(vbOpcoes);
+        return bpNoticia;
     }
 }

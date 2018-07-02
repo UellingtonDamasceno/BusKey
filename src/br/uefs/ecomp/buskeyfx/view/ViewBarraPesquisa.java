@@ -5,7 +5,6 @@
  */
 package br.uefs.ecomp.buskeyfx.view;
 
-import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -24,28 +23,27 @@ import javafx.scene.layout.HBox;
  */
 class ViewBarraPesquisa {
  
-    private ViewHelper helper;
-
-    public ViewBarraPesquisa(ViewHelper helper) {
-        this.helper = helper;
+    private final Helper tabPaneBase;    
+   
+    public ViewBarraPesquisa() {
+        tabPaneBase = new Helper();
     }
 
     protected HBox gerar() {
         HBox pesquisa = new HBox();
-
-        Button voltar = new Button();
-        Button frente = new Button();
-        Button home = new Button();
-        Button pesquisar = new Button();
-        Button adcionarAba = new Button();
+       
+        Button bntHome = new Button();
+        Button bntPesquisar = new Button();
         ComboBox ordem = new ComboBox();
+        
         ordem.setMinHeight(25);
         ordem.setMinWidth(30);
         ordem.getItems().addAll("R+", "R-");
         ordem.setValue("R+");
         ordem.setTooltip(new Tooltip("Ordem de relevancia"));
-        
+
         TextField barraPesquisa = new TextField();
+        barraPesquisa.setMinWidth(250);
         
         pesquisa.setPadding(new Insets(5, 5, 5, 5));
         pesquisa.setSpacing(10);
@@ -55,49 +53,33 @@ class ViewBarraPesquisa {
             @Override
             public void handle(KeyEvent event) {
                 if(event.getCode().equals(KeyCode.ENTER)){
-                    helper.pesquisar(barraPesquisa.getText(), ordem.getValue().toString());
+                    tabPaneBase.pesquisar(barraPesquisa, bntPesquisar, ordem.getValue().toString());
                 }
             }
             
         });
         
-        voltar.setOnAction((ActionEvent event) -> {
-            helper.getController().imprimeArvore();
-        });
-        
-        pesquisar.setOnAction(new EventHandler() {
+        bntPesquisar.setOnAction(new EventHandler() {
             @Override
             public void handle(Event event) {
-                helper.pesquisar(barraPesquisa.getText(), ordem.getValue().toString());
+                tabPaneBase.pesquisar(barraPesquisa, bntPesquisar, ordem.getValue().toString());
             }
         });
         
-        home.setOnAction(new EventHandler() {
+        bntHome.setOnAction(new EventHandler() {
             @Override
             public void handle(Event event) {
-                helper.getTabAtual("Home").setContent(new ViewHomePesquisa(helper).gerar());
-            }
-        });
-        adcionarAba.setOnAction(new EventHandler() {
-            @Override
-            public void handle(Event event) {
-                helper.addAba("Home").setContent(new ViewHomePesquisa(helper).gerar());
+                tabPaneBase.mudaConteudoTab("Home", new ViewHomePesquisa().gerar());
             }
         });
 
-        pesquisar.setGraphic(helper.imagem("pesquisar.png", 20, 20));
-        frente.setGraphic(helper.imagem("frente.png", 20, 20));
-        home.setGraphic(helper.imagem("home.png", 20, 20));
-        voltar.setGraphic(helper.imagem("voltar.png", 20, 20));
-        adcionarAba.setGraphic(helper.imagem("add.png", 20, 20));
+        bntPesquisar.setGraphic(tabPaneBase.imagem("pesquisar.png", 20, 20));
+        bntHome.setGraphic(tabPaneBase.imagem("home.png", 20, 20));
 
-        pesquisar.setTooltip(new Tooltip("Pesquisar"));
-        frente.setTooltip(new Tooltip("Em desenvolvimento"));
-        home.setTooltip(new Tooltip("Página inicial"));
-        voltar.setTooltip(new Tooltip("Em desenvolvimento"));
-        adcionarAba.setTooltip(new Tooltip("Nova aba"));
+        bntPesquisar.setTooltip(new Tooltip("Pesquisar"));
+        bntHome.setTooltip(new Tooltip("Página inicial"));
 
-        pesquisa.getChildren().addAll(helper.imagem("B.png", 20, 20), voltar, frente, home, barraPesquisa, pesquisar, ordem, adcionarAba);
+        pesquisa.getChildren().addAll(tabPaneBase.imagem("B.png", 20, 20), bntHome, barraPesquisa, bntPesquisar, ordem);
         return pesquisa;
     }
 }

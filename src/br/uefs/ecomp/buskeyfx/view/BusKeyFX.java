@@ -5,14 +5,11 @@
  */
 package br.uefs.ecomp.buskeyfx.view;
 
-import br.uefs.ecomp.buskeyfx.controller.BuskeyPesquisaController;
+import br.uefs.ecomp.buskeyfx.facade.FacadeBuskeyfx;
 import java.io.IOException;
 import javafx.application.Application;
 import javafx.event.Event;
 import javafx.event.EventHandler;
-import javafx.scene.Scene;
-import javafx.scene.control.Tab;
-import javafx.scene.control.TabPane;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
 
@@ -22,34 +19,28 @@ import javafx.stage.Stage;
  */
 public class BusKeyFX extends Application {
 
-    private TabPane tabPane;
-    private Stage palco;
-    private final BuskeyPesquisaController CONTROLLER = new BuskeyPesquisaController();
-    private ViewHelper helper;
+    private Helper tabPaneBase;
 
     @Override
-    public void start(Stage primaryStage) {
-        tabPane = new TabPane();
-        helper = new ViewHelper(tabPane, CONTROLLER);
-        palco = primaryStage;
-        
+    public void start(Stage primaryStage) throws IOException, ClassNotFoundException {
+        tabPaneBase = new Helper();
+        FacadeBuskeyfx facade = FacadeBuskeyfx.getInstance();
+       
         try {
-            CONTROLLER.carregarDicionario();
+            facade.gerarLog();
+            facade.carregarDicionario();
         } catch (IOException | ClassNotFoundException ex) {
-            helper.alerta("Erro ao carregar dicionario!");
+            Helper.alerta("Erro ao carregar Dicionario!");
         }
 
-        palco.setResizable(false);
-        palco.setTitle("BusKey");
-        palco.getIcons().add(new Image("/br/uefs/ecomp/buskeyfx/imagens/B.png"));
-        
-        Tab tabInicial = helper.addAba("Home");
-        tabInicial.setContent(new ViewHomePesquisa(helper).gerar());
-        
-        palco.setScene(new Scene(tabPane, 500, 450));
-        palco.show();
- 
-        palco.setOnCloseRequest(new EventHandler() {
+        primaryStage.setResizable(false);
+        primaryStage.setTitle("BusKey");
+        primaryStage.getIcons().add(new Image("/br/uefs/ecomp/buskeyfx/imagens/B.png"));
+
+        primaryStage.setScene(tabPaneBase.gerar());
+        primaryStage.show();
+
+        primaryStage.setOnCloseRequest(new EventHandler() {
             @Override
             public void handle(Event event) {
                 System.out.println("Feshow");

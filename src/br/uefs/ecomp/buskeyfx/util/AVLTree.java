@@ -106,12 +106,6 @@ public class AVLTree implements Serializable {
         }
     }
 
-    public void insereMult(Comparable[] palavras) {
-        for (Comparable palavra : palavras) {
-            inserir(palavra);
-        }
-    }
-
     public void inserir(Comparable palavra) {
         Node aInserir = new Node(palavra);
         inserir(this.raiz, aInserir);

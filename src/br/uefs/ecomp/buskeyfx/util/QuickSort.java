@@ -10,7 +10,12 @@ import java.util.LinkedList;
  */
 public class QuickSort {
 
-    
+    public void quickSort(Comparable[]vetor){
+        quickSort(vetor, 0, vetor.length-1);
+    }
+    public void quickSort(Comparable[]vetor, Comparator comparator){
+        quickSort(vetor, 0, vetor.length-1, comparator);
+    }
     /**
      * Método utilizado para ordenar coleções.
      *
@@ -18,7 +23,7 @@ public class QuickSort {
      * @param inicio posição inicial que será utilizada para a ordenação
      * @param fim posição correspondente ao tamanho e ou posição final da ordenação.
      */
-    public void quickSort(Comparable[] vetor, int inicio, int fim) {
+    private void quickSort(Comparable[] vetor, int inicio, int fim) {
         if (inicio < fim) {
             int pe = inicio;
             int pivo = fim;
@@ -42,7 +47,7 @@ public class QuickSort {
         }
     }
 
-    public void quickSort(Comparable[] vetor, int inicio, int fim, Comparator comparador) {
+    private void quickSort(Comparable[] vetor, int inicio, int fim, Comparator comparador) {
         if (inicio < fim) {
             int pe = inicio;
             int pivo = fim;
@@ -61,8 +66,8 @@ public class QuickSort {
                 }
             }
             swap(vetor, pe, pivo);
-            quickSort(vetor, inicio, pe - 1);
-            quickSort(vetor, pe + 1, fim);
+            quickSort(vetor, inicio, pe - 1, comparador);
+            quickSort(vetor, pe + 1, fim, comparador);
         }
     }
 

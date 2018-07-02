@@ -5,10 +5,16 @@
  */
 package br.uefs.ecomp.buskeyfx.view;
 
+import br.uefs.ecomp.buskeyfx.controller.ControllerEditar;
+import br.uefs.ecomp.buskeyfx.facade.FacadeBuskeyfx;
 import br.uefs.ecomp.buskeyfx.model.Pagina;
+import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.scene.Cursor;
+import javafx.scene.Parent;
 import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
@@ -21,77 +27,85 @@ import javafx.scene.layout.VBox;
  * @author Uellington Damasceno
  */
 public class Noticia {
-
-    private ViewHelper helper;
+    private final FacadeBuskeyfx facade;
+    private ViewResultado viewResultado;
+    private final Parent cenaAnterior;
     
-    Noticia(ViewHelper helper) {
-        this.helper = helper;
+    Noticia(Parent cenaAnterior, ViewResultado viewResultado) {
+        this.cenaAnterior = cenaAnterior;
+        this.viewResultado = viewResultado;
+        facade = FacadeBuskeyfx.getInstance();
     }
 
     protected VBox gerarNoticia(Pagina pagina) {
+        VBox vbBaseNoticia = new VBox();
+        HBox hbNomeNoticia = new HBox();
+        VerNoticia novaNoticia = new VerNoticia(pagina, cenaAnterior);
         
-        VBox baseNoticia = new VBox();
-        HBox nomeNoticia = new HBox();
-        VerNoticia novaNoticia = new VerNoticia(pagina, helper);
-        Label nome = new Label(pagina.getNome());
-        Label acessos = new Label("Acessos: " + pagina.getAcessos());
-        Label relevancia = new Label("Relevância: " + pagina.getRelevancia());
+        Label lblNome = new Label(pagina.getNome());
+        Label lblAcessos = new Label("Acessos: " + pagina.getAcessos());
+        Label lblOcorrência = new Label("Ocorrência: " + pagina.getOcorrencia());
+        Label lblPrevia = new Label(pagina.getPrevia());
         
-        nome.setMaxWidth(150);
-        nome.setId(pagina.getEndereco());
+        lblNome.setMaxWidth(150);
         
-        nomeNoticia.setOnMouseEntered((Event event) -> {
-            nomeNoticia.setCursor(Cursor.HAND);
+        hbNomeNoticia.getChildren().addAll(lblNome, extra(pagina));
+        hbNomeNoticia.setSpacing(200);
+        
+        hbNomeNoticia.setOnMouseEntered((Event event) -> {
+            hbNomeNoticia.setCursor(Cursor.HAND);
         });
-        nomeNoticia.setOnMouseClicked(new EventHandler<Event>() {
+        hbNomeNoticia.setOnMouseClicked(new EventHandler<Event>() {
             @Override
             public void handle(Event event) {
-                helper.getTabAtual("Pesquisa: " + pagina.getNome()).setContent(novaNoticia.gerar(false));
+                Helper.mudaConteudoTab("Pesquisa", novaNoticia.gerar(false));
             }
         });
-        nomeNoticia.getChildren().addAll(nome, extra(pagina));
-        nomeNoticia.setSpacing(200);
-        Label prev = new Label(pagina.getPrevia());
-        baseNoticia.getChildren().addAll(nomeNoticia, acessos, relevancia, prev);
-        baseNoticia.setSpacing(5);
-        return baseNoticia;
+        
+        vbBaseNoticia.getChildren().addAll(hbNomeNoticia, lblAcessos, lblOcorrência, lblPrevia);
+        vbBaseNoticia.setSpacing(5);
+        
+        return vbBaseNoticia;
     }
 
     private MenuBar extra(Pagina pagina) {
-        MenuBar ops = new MenuBar();
-        Menu menubar = new Menu();
-        menubar.setGraphic(helper.imagem("menu.png", 20, 20));
-        MenuItem editar = new MenuItem("Editar");
-        MenuItem deletar = new MenuItem("Deletar");
-        MenuItem outraAba = new MenuItem("Abrir em nova aba");
-
-        editar.setGraphic(helper.imagem("editar.png", 20, 20));
-        deletar.setGraphic(helper.imagem("deletar.png", 20, 20));
-        outraAba.setGraphic(helper.imagem("addAba.png", 20, 20));
+        MenuBar mbOpcoes = new MenuBar();
+        Menu menuMais = new Menu();
         
-        editar.setOnAction(new EventHandler() {
+        menuMais.setGraphic(Helper.imagem("menu.png", 20, 20));
+        
+        MenuItem menuItemEditar = new MenuItem("Editar");
+        MenuItem menuItemDeletar = new MenuItem("Deletar");
+
+        menuItemEditar.setGraphic(Helper.imagem("editar.png", 20, 20));
+        menuItemDeletar.setGraphic(Helper.imagem("deletar.png", 20, 20));
+        
+        
+        menuItemEditar.setOnAction(new EventHandler() {
             @Override
             public void handle(Event event) {
-                helper.addAba(pagina.getNome()).setContent(new VerNoticia(pagina, helper).gerar(true));
+                Helper.mudaConteudoTab("Editar", new VerNoticia(pagina, cenaAnterior).gerar(true));
             }
         });
-        deletar.setOnAction(new EventHandler() {
+        
+        menuItemDeletar.setOnAction(new EventHandler() {
             @Override
             public void handle(Event event) {
-                if(helper.alertaConfirma("Deseja apagar: " + pagina.getNome()+ "?")){
-                    //CONTROLLER.removePagina(pagina);
+                if(Helper.alertaConfirma("Deseja apagar: " + pagina.getNome()+ "?")){
+                    try {
+                        facade.deletaPagina(pagina);
+                        viewResultado.getPaginasEncontradas().remove(pagina);
+                        viewResultado.atualizarPaginacao();
+                    } catch (IOException ex) {
+                        Helper.alerta("Erro ao deletar pagina!");
+                    }
                 }
             }
         });
-        outraAba.setOnAction(new EventHandler() {
-            @Override
-            public void handle(Event event) {
-                helper.addAba("Pesquisa").setContent(new VerNoticia(pagina, helper).gerar(false));
-            }
-        });
-
-        ops.getMenus().addAll(menubar);
-        menubar.getItems().addAll(editar, deletar, outraAba);
-        return ops;
+        
+ 
+        mbOpcoes.getMenus().addAll(menuMais);
+        menuMais.getItems().addAll(menuItemEditar, menuItemDeletar);
+        return mbOpcoes;
     }
 }

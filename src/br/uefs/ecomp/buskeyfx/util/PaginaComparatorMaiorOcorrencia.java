@@ -12,13 +12,13 @@ import java.util.Comparator;
  *
  * @author Uellington Damasceno
  */
-public class PComparatorRmenor implements Comparator{
+public class PaginaComparatorMaiorOcorrencia implements Comparator{
 
     @Override
     public int compare(Object o1, Object o2) {
-        Pagina p = (Pagina) o1;
-        Pagina p2 = (Pagina) o2;
-        return -(p.getRelevancia() - p2.getRelevancia());
+        Pagina aComparar = (Pagina) o1;
+        Pagina comparada = (Pagina) o2;
+        return aComparar.getOcorrencia() - comparada.getOcorrencia();
     }
     
 }

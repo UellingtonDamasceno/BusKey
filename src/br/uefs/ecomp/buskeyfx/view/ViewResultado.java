@@ -5,17 +5,20 @@
  */
 package br.uefs.ecomp.buskeyfx.view;
 
+import br.uefs.ecomp.buskeyfx.controller.ControllerArquivos;
+import br.uefs.ecomp.buskeyfx.controller.ControllerEditar;
+import br.uefs.ecomp.buskeyfx.facade.FacadeBuskeyfx;
 import br.uefs.ecomp.buskeyfx.model.Pagina;
 import java.io.File;
 import java.io.IOException;
 import java.util.LinkedList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Parent;
 import javafx.scene.control.Pagination;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Separator;
+import javafx.scene.control.Tab;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 
@@ -24,57 +27,67 @@ import javafx.scene.layout.VBox;
  * @author Uellington Damasceno
  */
 public class ViewResultado {
-
-    private LinkedList resultados;
-    private final ViewHelper helper;
-
-    public ViewResultado(LinkedList resultados, ViewHelper helper) {
-        this.resultados = resultados;
-        this.helper = helper;
+    
+    private FacadeBuskeyfx facade;
+    private LinkedList paginasEncontradas;
+   
+    private Parent paginacao;
+    private final Tab tabBase;
+    
+    public ViewResultado(LinkedList resultados, Tab tabBase) {
+        facade = FacadeBuskeyfx.getInstance();
+        paginasEncontradas = resultados;
+        this.tabBase = tabBase;
     }
 
-    protected BorderPane createPagination() {
-        int numPaginas = ((resultados.size() % 10) != 0) ? resultados.size() / 10 + 1 : resultados.size() / 10;
-
-        BorderPane base = new BorderPane();
-
-        base.setTop(new ViewBarraPesquisa(helper).gerar());
+    public LinkedList getPaginasEncontradas(){
+        return paginasEncontradas;
+    }
+    
+    protected BorderPane gerar() {
+        int numPaginas = ((paginasEncontradas.size() % 10) != 0) ? paginasEncontradas.size() / 10 + 1 : paginasEncontradas.size() / 10;
+        
+        BorderPane bpBase = new BorderPane();
+        ViewBarraPesquisa bp = new ViewBarraPesquisa();
+        bpBase.setTop(bp.gerar());
 
         Pagination pagination = new Pagination(numPaginas, 0);
 
         pagination.setPageFactory((Integer pageIndex) -> {
-            System.out.println(pageIndex);
             return this.resultadoPesquisa(pageIndex, numPaginas);
         });
 
-        base.setCenter(pagination);
-        return base;
+        bpBase.setCenter(pagination);
+        paginacao = bpBase;
+        return bpBase;
     }
-
+    
+    public void atualizarPaginacao(){
+       tabBase.setContent(this.gerar());
+    }
     private ScrollPane resultadoPesquisa(int pageIndex, int numPaginas) {
-        ScrollPane scrollPane = new ScrollPane();
-        scrollPane.setPadding(new Insets(15, 20, 10, 50));
-        VBox vboxResultado = new VBox();
+        ScrollPane spBase = new ScrollPane();
+        spBase.setPadding(new Insets(15, 20, 10, 50));
+        VBox vbResultado = new VBox();
 
         int numPag = pageIndex * 10;
-        int limite = (numPag / 10 == numPaginas - 1) ? (resultados.size() % 10) : 10;
+        int limite = (numPag / 10 == numPaginas - 1) ? (paginasEncontradas.size() % 10) : 10;
 
         for (int i = numPag; i < numPag + limite; i++) {
             try {
-                Pagina pagina = (Pagina) resultados.get(i);
-                File arquivo = new File("arquivos\\" + pagina.getNome());
-                pagina.setConteudo(helper.getController().carregaConteudo(arquivo));
-                Noticia noticia = new Noticia(helper);
-                vboxResultado.getChildren().addAll(noticia.gerarNoticia(pagina), new Separator());
+                Pagina pagina = (Pagina) paginasEncontradas.get(i);
+                pagina.setTextoConteudo(facade.carregaConteudo(new File(pagina.getNome()), true));
+                Noticia noticia = new Noticia(paginacao, this);
+                vbResultado.getChildren().addAll(noticia.gerarNoticia(pagina), new Separator());
             } catch (IOException ex) {
-                helper.alerta("Erro ao carregar pagina: " + i);
+                Helper.alerta("Erro ao carregar pagina: " + i);
             }
         }
 
-        vboxResultado.setAlignment(Pos.CENTER);
-        vboxResultado.setSpacing(20);
-        scrollPane.setContent(vboxResultado);
-        return scrollPane;
+        vbResultado.setAlignment(Pos.CENTER);
+        vbResultado.setSpacing(20);
+        spBase.setContent(vbResultado);
+        return spBase;
     }
 
 }

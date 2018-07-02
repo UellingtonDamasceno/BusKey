@@ -5,6 +5,9 @@
  */
 package br.uefs.ecomp.buskeyfx.view;
 
+import br.uefs.ecomp.buskeyfx.controller.ControllerOrdenacao;
+import br.uefs.ecomp.buskeyfx.facade.FacadeBuskeyfx;
+import java.util.LinkedList;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.event.EventHandler;
@@ -30,14 +33,22 @@ import javafx.scene.text.Font;
  */
 public class ViewHomePesquisa {
 
-    ViewHelper helper;
-    BorderPane homePesquisa;
-    ComboBox opcoesPesquisas;
+    private final Helper helper;
+    private BorderPane homePesquisa;
+    private final ComboBox opcoesPesquisas;
+    
+    private final VerNoticia abaEdicao;
+    private final TopK topK;
 
-    public ViewHomePesquisa(ViewHelper helper) {
+    
+    private final FacadeBuskeyfx facade;
+    public ViewHomePesquisa() {
+        helper = new Helper();
+        facade = FacadeBuskeyfx.getInstance();
         homePesquisa = new BorderPane();
+        abaEdicao = new VerNoticia(homePesquisa);
+        topK = new TopK(homePesquisa);
         this.opcoesPesquisas = new ComboBox();
-        this.helper = helper;
     }
 
     protected BorderPane gerar() {
@@ -50,17 +61,17 @@ public class ViewHomePesquisa {
 
         TextField txtPesquisa = new TextField();
 
-        Button pesquisar = new Button();
-        pesquisar.setGraphic(helper.imagem("pesquisar.png", 20, 20));
+        Button bntPesquisar = new Button();
+        bntPesquisar.setGraphic(Helper.imagem("pesquisar.png", 20, 20));
         homePesquisa.setTop(opcoes());
 
         txtPesquisa.setMaxWidth(300);
         txtPesquisa.setMinWidth(300);
 
-        pesquisar.setOnAction(new EventHandler<ActionEvent>() {
+        bntPesquisar.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
-                helper.pesquisar(txtPesquisa.getText(), opcoesPesquisas.getValue().toString());
+                helper.pesquisar(txtPesquisa, bntPesquisar, opcoesPesquisas.getValue().toString());
             }
         });
 
@@ -68,15 +79,16 @@ public class ViewHomePesquisa {
             @Override
             public void handle(KeyEvent event) {
                 if (event.getCode().equals(KeyCode.ENTER)) {
-                    helper.pesquisar(txtPesquisa.getText(), opcoesPesquisas.getValue().toString());
+                    helper.pesquisar(txtPesquisa, bntPesquisar, opcoesPesquisas.getValue().toString());
                 }
             }
 
         });
-        acoes.getChildren().addAll(txtPesquisa, pesquisar);
-        centro.getChildren().addAll(helper.imagem("pesquisar.png", 100, 100), acoes);
+        acoes.getChildren().addAll(txtPesquisa, bntPesquisar);
+        centro.getChildren().addAll(Helper.imagem("pesquisar.png", 100, 100), acoes);
         homePesquisa.setCenter(centro);
         homePesquisa.setBottom(rodape());
+
         return homePesquisa;
     }
 
@@ -107,13 +119,22 @@ public class ViewHomePesquisa {
 
         Button listar = new Button();
         listar.setId(opcao);
-        listar.setGraphic(helper.imagem("pesquisar.png", 15, 15));
+        listar.setGraphic(Helper.imagem("pesquisar.png", 15, 15));
 
         listar.setOnAction(new EventHandler() {
             @Override
             public void handle(Event event) {
-                System.out.println(qtd.getText());
-                System.out.println(listar.getId());
+                if (qtd.getText().equals("")) {
+                    Helper.alerta("Valor invalido!");
+                } else {
+                    int k = Integer.parseInt(qtd.getText());
+
+                    LinkedList top = (listar.getId().contains("Pagina")) ? facade.listarTodasPaginas(): facade.listarTodasPalavras();
+                    top = facade.ordenar(top, listar.getId());
+
+                    String ordem = (listar.getId().contains("+")) ? "+" : "-";
+                    Helper.mudaConteudoTab(listar.getId(), topK.gerarTopK(top, k, ordem));
+                }
             }
         });
 
@@ -126,45 +147,48 @@ public class ViewHomePesquisa {
 
     private HBox opcoes() {
 
-        HBox base = new HBox(160);
+        HBox base = new HBox(90);
         HBox baseButton = new HBox(20);
         HBox hbOpPesquisa = new HBox(5);
 
         Label pesquisarPor = new Label("Pesquisar por: ");
         Button sliderVem = new Button();
         Button sliderVai = new Button();
+        Button addPagina = new Button();
+
+        addPagina.setGraphic(Helper.imagem("addAba.png", 20, 20));
+        addPagina.setOnAction(new EventHandler() {
+            @Override
+            public void handle(Event event) {
+                Helper.mudaConteudoTab("Nova Pagina", abaEdicao.gerar(true));
+            }
+        });
 
         sliderVem.setVisible(false);
         sliderVem.setTooltip(new Tooltip("Fechar slider"));
-        sliderVem.setGraphic(helper.imagem("voltar.png", 20, 20));
+        sliderVem.setGraphic(Helper.imagem("voltar.png", 20, 20));
 
-        sliderVem.setOnMouseClicked(new EventHandler() {
-            @Override
-            public void handle(Event event) {
-                homePesquisa.setLeft(null);
-                sliderVem.setVisible(false);
-                sliderVai.setVisible(true);
-            }
+        sliderVem.setOnMouseClicked((Event event) -> {
+            homePesquisa.setLeft(null);
+            sliderVem.setVisible(false);
+            sliderVai.setVisible(true);
         });
 
         sliderVai.setTooltip(new Tooltip("Abrir slider"));
-        sliderVai.setGraphic(helper.imagem("frente.png", 20, 20));
-        sliderVai.setOnMouseClicked(new EventHandler() {
-            @Override
-            public void handle(Event event) {
-                homePesquisa.setLeft(lateral());
-                sliderVai.setVisible(false);
-                sliderVem.setVisible(true);
-            }
+        sliderVai.setGraphic(Helper.imagem("frente.png", 20, 20));
+        sliderVai.setOnMouseClicked((Event event) -> {
+            homePesquisa.setLeft(lateral());
+            sliderVai.setVisible(false);
+            sliderVem.setVisible(true);
         });
 
-        opcoesPesquisas.getItems().addAll("Maior Relevancia", "Menor Relevancia");
-        opcoesPesquisas.setValue("Maior Relevancia");
+        opcoesPesquisas.getItems().addAll("Maior Relevancia (R+)", "Menor Relevancia (R-)");
+        opcoesPesquisas.setValue("Maior Relevancia (R+)");
 
         base.setPadding(new Insets(10, 10, 10, 10));
         pesquisarPor.setFont(Font.font("Verdanda", 14));
 
-        hbOpPesquisa.getChildren().addAll(pesquisarPor, opcoesPesquisas);
+        hbOpPesquisa.getChildren().addAll(pesquisarPor, opcoesPesquisas, addPagina);
         hbOpPesquisa.setAlignment(Pos.CENTER_RIGHT);
         baseButton.getChildren().addAll(sliderVai, sliderVem);
         base.getChildren().addAll(baseButton, hbOpPesquisa);
@@ -180,8 +204,8 @@ public class ViewHomePesquisa {
         Label contexto = new Label("Desenvolvido por: ");
         Label linkGitU = new Label("https://github.com/UellingtonDamasceno");
         Label linkGitI = new Label("https://github.com/invanildo99gomes");
-        linkGitU.setGraphic(helper.imagem("github.png", 25, 25));
-        linkGitI.setGraphic(helper.imagem("github.png", 25, 25));
+        linkGitU.setGraphic(Helper.imagem("github.png", 25, 25));
+        linkGitI.setGraphic(Helper.imagem("github.png", 25, 25));
         linkGitU.setFont(Font.font("Verdana", 10));
         linkGitI.setFont(Font.font("Verdana", 10));
         rodape.getChildren().addAll(contexto, linkGitU, linkGitI);
@@ -190,33 +214,21 @@ public class ViewHomePesquisa {
         linkGitU.setVisible(false);
         linkGitI.setVisible(false);
 
-        linkGitU.setOnMouseEntered(new EventHandler() {
-            @Override
-            public void handle(Event event) {
-                linkGitU.setCursor(Cursor.HAND);
-            }
+        linkGitU.setOnMouseEntered((Event event) -> {
+            linkGitU.setCursor(Cursor.HAND);
         });
-        linkGitI.setOnMouseEntered(new EventHandler() {
-            @Override
-            public void handle(Event event) {
-                linkGitI.setCursor(Cursor.HAND);
-            }
+        linkGitI.setOnMouseEntered((Event event) -> {
+            linkGitI.setCursor(Cursor.HAND);
         });
-        rodape.setOnMouseEntered(new EventHandler() {
-            @Override
-            public void handle(Event event) {
-                contexto.setVisible(true);
-                linkGitU.setVisible(true);
-                linkGitI.setVisible(true);
-            }
+        rodape.setOnMouseEntered((Event event) -> {
+            contexto.setVisible(true);
+            linkGitU.setVisible(true);
+            linkGitI.setVisible(true);
         });
-        rodape.setOnMouseExited(new EventHandler() {
-            @Override
-            public void handle(Event event) {
-                contexto.setVisible(false);
-                linkGitU.setVisible(false);
-                linkGitI.setVisible(false);
-            }
+        rodape.setOnMouseExited((Event event) -> {
+            contexto.setVisible(false);
+            linkGitU.setVisible(false);
+            linkGitI.setVisible(false);
         });
         return rodape;
     }

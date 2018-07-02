@@ -14,93 +14,55 @@ import java.io.Serializable;
 public class Pagina implements Comparable, Serializable {
 
     private final String nome;
-    private final String endereco;
-    private double modificacao;
     private int acessos;
-    private int relevancia;
-    private transient String conteudo; //Marcador utilizado para indicar que não deve ser impresso.
+    private int ocorrencia;
+    private transient String textoConteudo; //Marcador utilizado para indicar que não deve ser impresso.
 
-    public Pagina(String endereco, double modificacao, String conteudo) {
-        this.nome = retiraNome(endereco);
-        this.endereco = endereco;
-        this.conteudo = conteudo;
+    public Pagina(String nome, String conteudo) {
+        this.nome = nome;
+        this.textoConteudo = conteudo;
     }
 
     public String getNome() {
         return nome;
     }
 
-    public String getEndereco() {
-        return endereco;
-    }
-
-    public double getModificacao() {
-        return modificacao;
-    }
-
-    public void setModificacao(double modificacao) {
-        this.modificacao = modificacao;
-    }
-
     public int getAcessos() {
         return acessos;
     }
 
-    public void setAcessos(int acessos) {
-        this.acessos = acessos;
+    public int getOcorrencia() {
+        return ocorrencia;
     }
 
-    public int getRelevancia() {
-        return relevancia;
+    public void setOcorrencia(int ocorrencia) {
+        this.ocorrencia = ocorrencia;
     }
 
-    public void setRelevancia(int relevancia) {
-        this.relevancia = relevancia;
+    public String getTextoConteudo() {
+        return textoConteudo;
     }
 
-    public String getConteudo() {
-        return conteudo;
+    public void setTextoConteudo(String textoConteudo) {
+        this.textoConteudo = textoConteudo;
     }
 
-    public void setConteudo(String conteudo) {
-        this.conteudo = conteudo;
-    }
-
-    public void addAcessos(int acessos) {
-        this.acessos += acessos;
+    public void addAcessos() {
+        this.acessos++;
     }
     
     public String getPrevia(){
         return tiraPrevia();
     }
-    
-    private int descobrirRelevancia(String palavraChave) {
-        int pEncontradas = 0;
-        String[] palavras = conteudo.split(" ");
-        for (String palavraConteudo : palavras) {
-            if (palavraConteudo.equalsIgnoreCase(palavraChave)) {
-                pEncontradas++;
-            }
-        }
-        return pEncontradas;
-    }
-
-    private int descobrirRelevancia(String[] palavrasChaves) {
-        int relevanciaAtual = 0;
-        for (String palavraChave : palavrasChaves) {
-            relevanciaAtual +=  descobrirRelevancia(palavraChave);
-        }
-        return relevanciaAtual;
-    }
 
     private String tiraPrevia() {
-        if (conteudo.isEmpty()) {
+        if (textoConteudo.isEmpty()) {
             return "!!!PAGINA SEM CONTEUDO!!!";
         } else {
-            int tamanho = (conteudo.length() > 100) ? 100 : conteudo.length();
+            int tamanho = (textoConteudo.length() > 100) ? 100 : textoConteudo.length();
             String sup = "";
             for (int i = 0; i < tamanho; i++) {
-                sup += !(i == 50) ? conteudo.charAt(i) : "\n";
+                sup += !(i == 50) ? textoConteudo.charAt(i) : "\n";
             }
             return sup + "...";
         }
@@ -118,7 +80,7 @@ public class Pagina implements Comparable, Serializable {
     @Override
     public int compareTo(Object o) {
         Pagina outraPagina = (Pagina) o;
-        return this.getRelevancia() - outraPagina.getRelevancia();
+        return this.getOcorrencia() - outraPagina.getOcorrencia();
     }
 
     @Override
