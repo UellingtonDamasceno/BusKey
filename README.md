@@ -1,6 +1,13 @@
 # BusKeyFX
 Um buscador que utiliza indice invertido e árvore AVL para armazenar arquivos que contenham uma determinada palavra.
 
+# Sumário
+
+- [Motivação](#motivação)
+- [User stories](user-stories)
+- [Objetivo de aprendizagem](#objetivo-de-aprendizagem)
+- [Extras](#extras)
+
 # Motivação
 O Google Search é um serviço da empresa Google através do qual é possível fazer 
 pesquisas na internet sobre qualquer tipo de assunto ou conteúdo. Lançado pela
@@ -29,3 +36,12 @@ que significa executar uma pesquisa na internet pelo motor de busca Google.
 - Análise da complexidade de um algoritmo
 - Indice invertido
 - JavaFX
+
+# Extras 
+
+- Interface gráfica em utilizando JavaFX.
+- Utilização do componente JavaFX TablePane para permitir multiplas buscas simutaneamente. 
+- Pesquisas com multiplas palavras.
+- Paginação de resultados de pesquisa.
+- Permitir a criação de novas páginas.
+- Permitir que o usuário altere o conteúdo de uma página que foi resultado de alguma pesquisa.
