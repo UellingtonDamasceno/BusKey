@@ -45,3 +45,8 @@ que significa executar uma pesquisa na internet pelo motor de busca Google.
 - Paginação de resultados de pesquisa.
 - Permitir a criação de novas páginas.
 - Permitir que o usuário altere o conteúdo de uma página que foi resultado de alguma pesquisa.
+
+----------
+
+| :arrow_left: [Problema anterior](https://github.com/UellingtonDamasceno/BlackJack) |............................... :arrow_up: [Voltar ao topo](#BusKeyFX) :arrow_up: ...............................| [Próximo problema](https://github.com/UellingtonDamasceno/MyBook) :arrow_right: | 
+| :----: |-----| :-----:| 
