@@ -1,12 +1,17 @@
 # BusKeyFX
 Um buscador que utiliza indice invertido e árvore AVL para armazenar arquivos que contenham uma determinada palavra.
 
+
+|![Demonstração de pesquisa](https://github.com/UellingtonDamasceno/BusKeyFX/blob/master/resources/imagens/pesquisas.gif) | ![Demostração Top-K](https://github.com/UellingtonDamasceno/BusKeyFX/blob/master/resources/imagens/top-k.gif)|
+|----|----|
+
 # Sumário
 
 - [Motivação](#motivação)
 - [User stories](user-stories)
 - [Objetivo de aprendizagem](#objetivo-de-aprendizagem)
 - [Extras](#extras)
+- [Curiosidades](#curiosidades)
 
 # Motivação
 O Google Search é um serviço da empresa Google através do qual é possível fazer 
@@ -45,6 +50,14 @@ que significa executar uma pesquisa na internet pelo motor de busca Google.
 - Paginação de resultados de pesquisa.
 - Permitir a criação de novas páginas.
 - Permitir que o usuário altere o conteúdo de uma página que foi resultado de alguma pesquisa.
+
+## Curiosidades
+
+1. Primeiro produto com interface gráfica.
+2. O produto completo era formado por um relatório e o código fonte. Mas o relatório não foi feito por que a interface gráfica valia 2 pontos extras e escrever código é mais divertido do que relatórios :)
+3. Não era permitido o uso de construtores de telas.
+4. O código funciona melhor no windows.
+5. Houve um momento durante o desenvolvimento do _software_ que dava _stackoverflow_ e o problema foi resolvido utilizando o padrão de projeto `Facade`. 
 
 ----------
 
