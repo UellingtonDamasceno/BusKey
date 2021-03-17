@@ -58,6 +58,7 @@ que significa executar uma pesquisa na internet pelo motor de busca Google.
 3. Não era permitido o uso de construtores de telas.
 4. O código funciona melhor no windows.
 5. Houve um momento durante o desenvolvimento do _software_ que dava _stackoverflow_ e o problema foi resolvido utilizando o padrão de projeto `Facade`. 
+6. O nome original do problema é "Feira Gugou".
 
 ----------
 
