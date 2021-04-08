@@ -5,14 +5,6 @@ Um buscador que utiliza indice invertido e árvore AVL para armazenar arquivos q
 |![Demonstração de pesquisa](https://github.com/UellingtonDamasceno/BusKeyFX/blob/master/resources/imagens/pesquisas.gif) | ![Demostração Top-K](https://github.com/UellingtonDamasceno/BusKeyFX/blob/master/resources/imagens/top-k.gif)|
 |----|----|
 
-# Sumário
-
-- [Motivação](#motivação)
-- [User stories](user-stories)
-- [Objetivo de aprendizagem](#objetivo-de-aprendizagem)
-- [Extras](#extras)
-- [Curiosidades](#curiosidades)
-
 # Motivação
 O Google Search é um serviço da empresa Google através do qual é possível fazer 
 pesquisas na internet sobre qualquer tipo de assunto ou conteúdo. Lançado pela
